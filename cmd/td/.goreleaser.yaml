@@ -1,0 +1,49 @@
+release:
+  github:
+    owner: voioo
+    name: td
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+builds:
+  - env:
+      - GO_VERSION=1.20
+    goos:
+      - linux
+      - windows
+      - darwin
+# replaces architecture naming in the archive name
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+# generate homebrew-tap  
+brews:
+  - name: voioo
+    tap:
+      owner: voioo
+      name: td
+    folder: Formula
+    homepage: https://github.com/voioo/td
+    description: A simple todo list manager written in Go
+    test: |
+      system "#{bin}/td"
+    install: |
+      bin.install "td"
