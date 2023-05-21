@@ -1,0 +1,49 @@
+name: goreleaser
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      flags: ""
+    steps:
+      - name: Set snapshot flags for PR events
+        if: github.event_name == 'pull_request'
+        run: echo "flags=--snapshot" >> $GITHUB_ENV
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bump version and push tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: anothrNick/github-tag-action@1.67.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: patch
+      - name: Setup Go environment
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.1
+          cache: true
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean ${{ env.flags }}
+          workdir: ./cmd/td
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

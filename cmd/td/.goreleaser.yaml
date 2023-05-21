@@ -1,0 +1,36 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+- targets: [go_first_class]
+  mod_timestamp: '{{ .CommitTimestamp }}'
+  flags:
+    - -trimpath
+  ldflags:
+    - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }}
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+release:
+  name_template: 'v{{ .Version }}'
+# generate homebrew-tap  
+brews:
+  - name: voioo
+    repository:
+      owner: voioo
+      name: td
+    folder: Formula
+    homepage: https://github.com/voioo/td
+    description: A simple todo list manager written in Go
+    test: |
+      system "#{bin}/td"
+    install: |
+      bin.install "td"
