@@ -1,4 +1,4 @@
-package todo
+package td
 
 import "time"
 

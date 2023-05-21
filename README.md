@@ -5,7 +5,7 @@ td is a Golang Todo-cli app
 ## Installation
 
 ```
-go get github.com/voioo/td/cmd/todo
+go get github.com/voioo/td/cmd/td
 ```
 
 ## Usage
