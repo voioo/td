@@ -8,7 +8,7 @@ import (
 	input "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/termenv"
-	"github.com/voioo/td"
+	todo "github.com/voioo/td"
 )
 
 const (
@@ -194,11 +194,11 @@ func (m model) doneTaskListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "j":
+		case "j", "down":
 			if m.cursor < len(m.doneTasks) {
 				m.cursor++
 			}
-		case "k":
+		case "k", "up":
 			if m.cursor > 1 {
 				m.cursor--
 			}
