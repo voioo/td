@@ -23,6 +23,7 @@ type keyMap struct {
 	Left   key.Binding
 	Right  key.Binding
 	Enter  key.Binding
+	Escape key.Binding
 	Type   key.Binding
 	Help   key.Binding
 	Quit   key.Binding
@@ -44,6 +45,10 @@ var keys = keyMap{
 	Enter: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "save"),
+	),
+	Escape: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "go back"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
@@ -80,7 +85,7 @@ var keys = keyMap{
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right}, // first column
-		{k.Help, k.Quit}, // second column
+		{k.Escape, k.Help, k.Quit},                       // second column
 	}
 }
 
@@ -287,7 +292,7 @@ func (m model) doneTaskListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor == 0 {
 				break
 			}
-			m.doneTasks = append(m.tasks[:m.cursor-1], m.tasks[m.cursor:]...)
+			m.doneTasks = append(m.doneTasks[:m.cursor-1], m.doneTasks[m.cursor:]...)
 			if len(m.doneTasks) == 0 {
 				m.cursor = 0
 			} else {
@@ -328,7 +333,7 @@ func (m model) addingTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Left):
+		case key.Matches(msg, m.keys.Escape):
 			m.mode = normalMode
 			m.editTaskNameInput.Reset()
 			return m, nil
@@ -366,7 +371,7 @@ func (m model) editTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Left):
+		case key.Matches(msg, m.keys.Escape):
 			m.mode = normalMode
 			m.editTaskNameInput.Reset()
 			return m, nil
