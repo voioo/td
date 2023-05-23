@@ -10,7 +10,7 @@ go get github.com/voioo/td/cmd/td
 
 ## Usage
 
-Press 'h' to view usage
+Press '?' to view usage
 
 ## Acknowledgements
 
