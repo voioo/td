@@ -48,7 +48,7 @@ var keys = keyMap{
 	),
 	Escape: key.NewBinding(
 		key.WithKeys("esc"),
-		key.WithHelp("esc", "go back"),
+		key.WithHelp("esc", "go back/quit"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
@@ -75,8 +75,8 @@ var keys = keyMap{
 		key.WithHelp("?", "toggle usage"),
 	),
 	Quit: key.NewBinding(
-		key.WithKeys("q", "esc", "ctrl+c"),
-		key.WithHelp("q", "quit"),
+		key.WithKeys("esc", "ctrl+c"),
+		key.WithHelp("esc", "quit"),
 	),
 }
 
@@ -85,7 +85,7 @@ var keys = keyMap{
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right}, // first column
-		{k.Escape, k.Help, k.Quit},                       // second column
+		{k.Type, k.Help, k.Escape},                       // second column
 	}
 }
 
@@ -100,39 +100,39 @@ const (
 
 --Normal Mode--
 
-j - move cursor one line down
-k - move cursor one line up
+↓ - move cursor one line down
+↑ - move cursor one line up
 a - add a new task(move to additional mode)
 d - remove a task
-e - edit the task name(mode to edit mode)
-h - help(switch to help mode)
-x, enter - mark as done
+→ - edit the task name(mode to edit mode)
+? - help(switch to help mode)
+enter - mark as done
 t - switch to done tasks list mode
-q - save tasks and close this app
+esc, ctrl+c - save tasks and close this app
 
 --Done Tasks List Mode--
 
-j - move cursor one line down
-k - move cursor one line up
+↓ - move cursor one line down
+↑ - move cursor one line up
 d - remove a task
 t - switch to normal mode
-x, enter - mark as not done
-q - save tasks and close this app
+enter - mark as done
+ctrl+c - save tasks and close this app
 
 --Additional Mode--
 
-ctrl+q - switch to normal mode
+esc - switch to normal mode
 enter - submit
 
 --Edit Mode--
 
-left - go back
-ctrl+q - switch to normal mode
+← - go back
+esc - switch to normal mode
 enter - submit
 
 --Help Mode--
-left - back
-q - switch to normal mode
+← - back
+esc - switch to normal mode
 `
 )
 

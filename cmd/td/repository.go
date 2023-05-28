@@ -8,7 +8,13 @@ import (
 	todo "github.com/voioo/td"
 )
 
-var repositoryFilePath = os.Getenv("HOME") + "/.todo-cli"
+var repositoryFilePath = func() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		report(err)
+	}
+	return homeDir + "/.td.json"
+}()
 
 func loadTasksFromRepositoryFile() (todos []*todo.Task, doneTodos []*todo.Task, latestTaskID int) {
 	f, err := os.Open(repositoryFilePath)
