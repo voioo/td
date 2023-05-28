@@ -5,20 +5,20 @@
 class Voioo < Formula
   desc "A simple todo list manager written in Go"
   homepage "https://github.com/voioo/td"
-  version "0.1.6"
+  version "0.1.7"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/voioo/td/releases/download/v0.1.6/td_0.1.6_Darwin_arm64.tar.gz"
-      sha256 "c5b9d2bd7cd9e271d39ed5794f36aa03488ff2116dfe89570430a988b45e2eba"
+    if Hardware::CPU.intel?
+      url "https://github.com/voioo/td/releases/download/v0.1.7/td_0.1.7_Darwin_x86_64.tar.gz"
+      sha256 "93c99d25e2c751a0cc31fa0a3369dad8af1ea9b6a7815d634c867e24be20e56e"
 
       def install
         bin.install "td"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/v0.1.6/td_0.1.6_Darwin_x86_64.tar.gz"
-      sha256 "1af4e4ce40287ffe9a1ddcb32697309d2f94326ff33cf8bb395a9964f10a6503"
+    if Hardware::CPU.arm?
+      url "https://github.com/voioo/td/releases/download/v0.1.7/td_0.1.7_Darwin_arm64.tar.gz"
+      sha256 "fcc237396f279c8c6b4483d08156f390ca66712d83610b35a222ec71b07d69a6"
 
       def install
         bin.install "td"
@@ -27,17 +27,17 @@ class Voioo < Formula
   end
 
   on_linux do
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/voioo/td/releases/download/v0.1.6/td_0.1.6_Linux_arm64.tar.gz"
-      sha256 "97db30d4be447cd98471804f5c5d71c0cc7dfea4068b6b3998d131bdb0e1e54b"
+    if Hardware::CPU.intel?
+      url "https://github.com/voioo/td/releases/download/v0.1.7/td_0.1.7_Linux_x86_64.tar.gz"
+      sha256 "caf7bdc2baf8de8c825358418c3435c7a678298c8ba7b10802dd439d770fa706"
 
       def install
         bin.install "td"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/v0.1.6/td_0.1.6_Linux_x86_64.tar.gz"
-      sha256 "4dfeaa7db4d0729d15701648afdfe692fadd2fc63957ab79e2a8822ec31e0402"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/voioo/td/releases/download/v0.1.7/td_0.1.7_Linux_arm64.tar.gz"
+      sha256 "3ac15caec8d7683eb32fb4e2162039239487940d8f5805c41bf67ef3af56b1db"
 
       def install
         bin.install "td"
