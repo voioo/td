@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path"
 
 	todo "github.com/voioo/td"
 )
@@ -13,7 +14,7 @@ var repositoryFilePath = func() string {
 	if err != nil {
 		report(err)
 	}
-	return homeDir + "/.td.json"
+	return path.Join(homeDir, ".td.json")
 }()
 
 func loadTasksFromRepositoryFile() (todos []*todo.Task, doneTodos []*todo.Task, latestTaskID int) {
