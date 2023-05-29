@@ -399,11 +399,8 @@ func (m model) editTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) helpUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c":
-			m.saveTasks()
-			return m, tea.Quit
-		case "q":
+		switch {
+		case key.Matches(msg, m.keys.Quit):
 			m.mode = normalMode
 		}
 	}
