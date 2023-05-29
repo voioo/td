@@ -5,20 +5,20 @@
 class Voioo < Formula
   desc "A simple todo list manager written in Go"
   homepage "https://github.com/voioo/td"
-  version "0.1.8"
+  version "0.2.0"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/voioo/td/releases/download/v0.1.8/td_0.1.8_Darwin_arm64.tar.gz"
-      sha256 "4b9314aedd55ff9114acf01a6564e51d74c0995645b1d27dec65a3d92a5376c7"
+    if Hardware::CPU.intel?
+      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Darwin_x86_64.tar.gz"
+      sha256 "cd124468d1116beb0197f4a24035331a18e54f8184e7d1d81cde55336c86f944"
 
       def install
         bin.install "td"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/v0.1.8/td_0.1.8_Darwin_x86_64.tar.gz"
-      sha256 "d253b5d2c14b396b84226ea84acf7ad8ec54b1e933d324bde158715b2bfc7842"
+    if Hardware::CPU.arm?
+      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Darwin_arm64.tar.gz"
+      sha256 "cbd04bc71edcb9a23b914feccffe96c30de6eee1386c4e888745656da531fd60"
 
       def install
         bin.install "td"
@@ -27,17 +27,17 @@ class Voioo < Formula
   end
 
   on_linux do
-    if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/v0.1.8/td_0.1.8_Linux_x86_64.tar.gz"
-      sha256 "79cc025ccf8258544ad1a022668b45e9eea59e22ceeb9ce66f458fac4d2e51c2"
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Linux_arm64.tar.gz"
+      sha256 "4580652e3450400f957393cace6bff306dc99f557d77cc1a4d93697ead1e69c9"
 
       def install
         bin.install "td"
       end
     end
-    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/voioo/td/releases/download/v0.1.8/td_0.1.8_Linux_arm64.tar.gz"
-      sha256 "0fa1d4b941f40f50c921ef7809c7370ab9c49aa0cce595c65fc2214f34754e5f"
+    if Hardware::CPU.intel?
+      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Linux_x86_64.tar.gz"
+      sha256 "14e12ab3d4cd1c26f6fc39fbf72cdf5f1f30f7811c6c2bc877f09d3c3d985a88"
 
       def install
         bin.install "td"
