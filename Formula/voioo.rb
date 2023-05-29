@@ -5,20 +5,20 @@
 class Voioo < Formula
   desc "A simple todo list manager written in Go"
   homepage "https://github.com/voioo/td"
-  version "0.2.0"
+  version "0.2.1"
 
   on_macos do
-    if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Darwin_x86_64.tar.gz"
-      sha256 "cd124468d1116beb0197f4a24035331a18e54f8184e7d1d81cde55336c86f944"
+    if Hardware::CPU.arm?
+      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Darwin_arm64.tar.gz"
+      sha256 "543a7eb0b893f6f945d1842b42a490eefb73d2ac2b97c030eeddff9bb4e1a087"
 
       def install
         bin.install "td"
       end
     end
-    if Hardware::CPU.arm?
-      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Darwin_arm64.tar.gz"
-      sha256 "cbd04bc71edcb9a23b914feccffe96c30de6eee1386c4e888745656da531fd60"
+    if Hardware::CPU.intel?
+      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Darwin_x86_64.tar.gz"
+      sha256 "338d222b7a46ea44f624d49669f84159b4c95e3a0575987d8f7dfa019d944ef3"
 
       def install
         bin.install "td"
@@ -28,16 +28,16 @@ class Voioo < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Linux_arm64.tar.gz"
-      sha256 "4580652e3450400f957393cace6bff306dc99f557d77cc1a4d93697ead1e69c9"
+      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Linux_arm64.tar.gz"
+      sha256 "4c6b4cf8172f9f2c499108f2de9bcaa76c749fcc1436dd05cf4f6deecc65b140"
 
       def install
         bin.install "td"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/0.2.0/td_0.2.0_Linux_x86_64.tar.gz"
-      sha256 "14e12ab3d4cd1c26f6fc39fbf72cdf5f1f30f7811c6c2bc877f09d3c3d985a88"
+      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Linux_x86_64.tar.gz"
+      sha256 "9e0b5dfa13d254eb67ac900da82d777e61a569d47b1e9d419613e177a893c569"
 
       def install
         bin.install "td"
