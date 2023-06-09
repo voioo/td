@@ -48,23 +48,18 @@ func loadTasksFromRepositoryFile() (todos []*todo.Task, doneTodos []*todo.Task, 
 }
 
 func (m model) saveTasks() {
-	f, err := os.OpenFile(repositoryFilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_TRUNC, os.ModeAppend)
+	f, err := os.OpenFile(repositoryFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			report(err)
-		}
-		f, err = os.Create(repositoryFilePath)
-		if err != nil {
-			report(err)
-		}
-	}
-	defer f.Close()
-	if err := f.Truncate(0); err != nil {
 		report(err)
 	}
+	defer f.Close()
 
 	todos := append(m.tasks, m.doneTasks...)
 	data, _ := json.Marshal(todos)
+
+	if err := f.Truncate(0); err != nil {
+		report(err)
+	}
 
 	_, err = f.Write(data)
 	if err != nil {
