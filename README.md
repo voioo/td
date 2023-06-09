@@ -1,6 +1,6 @@
 # td (Todo-cli)
 
-td is a Golang Todo-cli app
+td is a To-do TUI app written in golang
 
 ## Installation
 
