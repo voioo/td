@@ -5,20 +5,20 @@
 class Voioo < Formula
   desc "A simple todo list manager written in Go"
   homepage "https://github.com/voioo/td"
-  version "0.2.1"
+  version "0.2.2"
 
   on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Darwin_arm64.tar.gz"
-      sha256 "543a7eb0b893f6f945d1842b42a490eefb73d2ac2b97c030eeddff9bb4e1a087"
+    if Hardware::CPU.intel?
+      url "https://github.com/voioo/td/releases/download/v0.2.2/td_0.2.2_Darwin_x86_64.tar.gz"
+      sha256 "d3b97e317c91fe84d820122f2354971ee5c8abcc79d3dbc6e4f79034bf35577b"
 
       def install
         bin.install "td"
       end
     end
-    if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Darwin_x86_64.tar.gz"
-      sha256 "338d222b7a46ea44f624d49669f84159b4c95e3a0575987d8f7dfa019d944ef3"
+    if Hardware::CPU.arm?
+      url "https://github.com/voioo/td/releases/download/v0.2.2/td_0.2.2_Darwin_arm64.tar.gz"
+      sha256 "0429911509cf330f828ed8208f1e4ddb6d4bcb9cb741e41ad5af3c539fcafd37"
 
       def install
         bin.install "td"
@@ -28,16 +28,16 @@ class Voioo < Formula
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Linux_arm64.tar.gz"
-      sha256 "4c6b4cf8172f9f2c499108f2de9bcaa76c749fcc1436dd05cf4f6deecc65b140"
+      url "https://github.com/voioo/td/releases/download/v0.2.2/td_0.2.2_Linux_arm64.tar.gz"
+      sha256 "d9594ffb1beccf8f4fd79fd7cae58b407563a7befc5b87a319c4797fc422f204"
 
       def install
         bin.install "td"
       end
     end
     if Hardware::CPU.intel?
-      url "https://github.com/voioo/td/releases/download/v0.2.1/td_0.2.1_Linux_x86_64.tar.gz"
-      sha256 "9e0b5dfa13d254eb67ac900da82d777e61a569d47b1e9d419613e177a893c569"
+      url "https://github.com/voioo/td/releases/download/v0.2.2/td_0.2.2_Linux_x86_64.tar.gz"
+      sha256 "a41c4618ea7b9da1c6250fbb2429907f4abc1464f14e12c0a3ce9a8a37ddc44f"
 
       def install
         bin.install "td"
