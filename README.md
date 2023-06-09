@@ -1,4 +1,4 @@
-# td (Todo-cli)
+# td
 
 td is a To-do TUI app written in golang
 
