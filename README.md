@@ -8,6 +8,8 @@ td is a To-do TUI app written in golang
 go get github.com/voioo/td/cmd/td
 ```
 
+You can also check the releases page on Github and download the one you need.
+
 ## Usage
 
 Press '?' to view usage
