@@ -1,6 +1,6 @@
 module github.com/voioo/td
 
-go 1.21
+go 1.20
 
 require (
 	github.com/charmbracelet/bubbles v0.17.1
