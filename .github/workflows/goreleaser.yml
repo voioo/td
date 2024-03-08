@@ -26,7 +26,7 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --clean -f .goreleaser.yaml
+          args: release --clean --skip-validate -f .goreleaser.yaml
           workdir: ./cmd/td
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
