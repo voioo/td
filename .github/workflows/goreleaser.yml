@@ -1,3 +1,16 @@
+name: goreleaser
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
