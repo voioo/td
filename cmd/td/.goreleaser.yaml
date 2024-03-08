@@ -1,23 +1,16 @@
-release:
-  github:
-    owner: voioo
-    name: td
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
 builds:
-  - env:
-      - GO_VERSION=1.22
-    goos:
-      - linux
-      - windows
-      - darwin
-# replaces architecture naming in the archive name
-archives:
-  - format_overrides:
-    - goos: windows
-      format: zip
+- targets: [go_first_class]
+  mod_timestamp: '{{ .CommitTimestamp }}'
+  flags:
+    # trims path
+    - -trimpath
+  ldflags:
+    # use commit date instead of current date as main.date
+    # only needed if you actually use those things in your main package, otherwise can be ignored.
+    - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }}
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -28,6 +21,9 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+release:
+  name_template: 'v{{ .Version }}'
 # generate homebrew-tap  
 brews:
   - name: voioo
