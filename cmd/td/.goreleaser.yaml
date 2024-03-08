@@ -21,7 +21,6 @@ changelog:
 
 release:
   name_template: 'v{{ .Version }}'
-# generate homebrew-tap  
 brews:
   - name: voioo
     repository:
