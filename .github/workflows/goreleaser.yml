@@ -14,7 +14,7 @@ jobs:
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       -
@@ -26,7 +26,7 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --clean -f ./cmd/td/.goreleaser.yaml
+          args: release --clean -f .goreleaser.yaml
           workdir: ./cmd/td
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
