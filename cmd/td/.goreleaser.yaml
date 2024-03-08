@@ -31,7 +31,7 @@ changelog:
 # generate homebrew-tap  
 brews:
   - name: voioo
-    tap:
+    repository:
       owner: voioo
       name: td
     folder: Formula
