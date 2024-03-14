@@ -23,7 +23,7 @@ changelog:
 release:
   name_template: 'v{{ .Version }}'
 brews:
-  - name: voioo
+  - name: td
     repository:
       owner: voioo
       name: homebrew-td
