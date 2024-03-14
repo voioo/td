@@ -4,8 +4,9 @@ td is a To-do TUI app written in golang
 
 ## Installation
 
+### MacOS
 ```
-go get github.com/voioo/td/cmd/td
+brew tap voioo/td
 ```
 
 You can also check the releases page on Github and download the one you need.
