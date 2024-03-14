@@ -2,7 +2,7 @@ before:
   hooks:
     - go mod tidy
 builds:
-- main: ./cmd/td/main.go
+- main: ./cmd/td/
   targets: [go_first_class]
   mod_timestamp: '{{ .CommitTimestamp }}'
   flags:
