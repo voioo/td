@@ -57,5 +57,6 @@ jobs:
           workdir: ./cmd/td
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
           GOPATH: /home/runner/go
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
