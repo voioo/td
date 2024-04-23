@@ -15,126 +15,16 @@ import (
 	todo "github.com/voioo/td"
 )
 
-type keyMap struct {
-	Add    key.Binding
-	Up     key.Binding
-	Down   key.Binding
-	Delete key.Binding
-	Left   key.Binding
-	Right  key.Binding
-	Enter  key.Binding
-	Escape key.Binding
-	Type   key.Binding
-	Help   key.Binding
-	Quit   key.Binding
-}
-
 func (k keyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-var keys = keyMap{
-	Add: key.NewBinding(
-		key.WithKeys("a"),
-		key.WithHelp("a", "add new task"),
-	),
-	Delete: key.NewBinding(
-		key.WithKeys("d"),
-		key.WithHelp("d", "delete task"),
-	),
-	Enter: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("enter", "save"),
-	),
-	Escape: key.NewBinding(
-		key.WithKeys("esc"),
-		key.WithHelp("esc", "go back/quit"),
-	),
-	Up: key.NewBinding(
-		key.WithKeys("up", "k"),
-		key.WithHelp("↑/k", "move up"),
-	),
-	Down: key.NewBinding(
-		key.WithKeys("down", "j"),
-		key.WithHelp("↓/j", "move down"),
-	),
-	Left: key.NewBinding(
-		key.WithKeys("left", "h"),
-		key.WithHelp("←/h", "move left"),
-	),
-	Right: key.NewBinding(
-		key.WithKeys("right", "l"),
-		key.WithHelp("→/l", "move right"),
-	),
-	Type: key.NewBinding(
-		key.WithKeys("t"),
-		key.WithHelp("t", "list type"),
-	),
-	Help: key.NewBinding(
-		key.WithKeys("?", "?"),
-		key.WithHelp("?", "toggle usage"),
-	),
-	Quit: key.NewBinding(
-		key.WithKeys("esc", "ctrl+c"),
-		key.WithHelp("esc", "quit"),
-	),
-}
-
-// FullHelp returns keybindings for the expanded help view. It's part of the
-// key.Map interface.
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right}, // first column
-		{k.Type, k.Help, k.Escape},                       // second column
+		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right},
+		{k.Type, k.Help, k.Escape},
 	}
 }
-
-const (
-	normalMode = iota
-	doneTaskListMode
-	additionalMode
-	editMode
-	helpMode
-
-	usage = `
-
---Normal Mode--
-
-↓ - move cursor one line down
-↑ - move cursor one line up
-a - add a new task(move to additional mode)
-d - remove a task
-→ - edit the task name(mode to edit mode)
-? - help(switch to help mode)
-enter - mark as done
-t - switch to done tasks list mode
-esc, ctrl+c - save tasks and close this app
-
---Done Tasks List Mode--
-
-↓ - move cursor one line down
-↑ - move cursor one line up
-d - remove a task
-t - switch to normal mode
-enter - mark as done
-ctrl+c - save tasks and close this app
-
---Additional Mode--
-
-esc - switch to normal mode
-enter - submit
-
---Edit Mode--
-
-← - go back
-esc - switch to normal mode
-enter - submit
-
---Help Mode--
-← - back
-esc - switch to normal mode
-`
-)
 
 type model struct {
 	cursor       int
@@ -167,7 +57,7 @@ func initializeModel() tea.Model {
 
 	return model{
 		cursor:            cursor,
-		mode:              normalMode,
+		mode:              ModeNormal,
 		latestTaskID:      ltID,
 		tasks:             tasks,
 		doneTasks:         doneTasks,
@@ -185,19 +75,19 @@ func (model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.mode {
-	case normalMode:
+	case ModeNormal:
 		return m.normalUpdate(msg)
-	case doneTaskListMode:
+	case ModeDoneTaskList:
 		return m.doneTaskListUpdate(msg)
-	case additionalMode:
+	case ModeAdditional:
 		return m.addingTaskUpdate(msg)
-	case editMode:
+	case ModeEdit:
 		return m.editTaskUpdate(msg)
-	case helpMode:
+	case ModeHelp:
 		return m.helpUpdate(msg)
+	default:
+		return m, nil
 	}
-
-	return m, nil
 }
 
 func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -213,7 +103,7 @@ func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case key.Matches(msg, m.keys.Add):
-			m.mode = additionalMode
+			m.mode = ModeAdditional
 			m.newTaskNameInput.Focus()
 			return m, nil
 		case key.Matches(msg, m.keys.Delete):
@@ -230,12 +120,12 @@ func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor == 0 {
 				break
 			}
-			m.mode = editMode
+			m.mode = ModeEdit
 			m.editTaskNameInput.Placeholder = m.tasks[m.cursor-1].Name
 			m.editTaskNameInput.Focus()
 			return m, nil
 		case key.Matches(msg, m.keys.Help):
-			m.mode = helpMode
+			m.mode = ModeHelp
 		case key.Matches(msg, m.keys.Enter):
 			if m.cursor == 0 {
 				break
@@ -252,13 +142,13 @@ func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = 1
 			}
 		case key.Matches(msg, m.keys.Type):
-			if m.mode == doneTaskListMode {
+			if m.mode == ModeDoneTaskList {
 				if len(m.tasks) == 0 {
 					m.cursor = 0
 				} else {
 					m.cursor = 1
 				}
-				m.mode = normalMode
+				m.mode = ModeNormal
 				return m, nil
 			}
 			if len(m.doneTasks) == 0 {
@@ -266,7 +156,7 @@ func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.cursor = 1
 			}
-			m.mode = doneTaskListMode
+			m.mode = ModeDoneTaskList
 		case key.Matches(msg, m.keys.Quit):
 			m.saveTasks()
 			return m, tea.Quit
@@ -304,7 +194,7 @@ func (m model) doneTaskListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.cursor = 1
 			}
-			m.mode = normalMode
+			m.mode = ModeNormal
 		case key.Matches(msg, m.keys.Enter):
 			if m.cursor == 0 {
 				break
@@ -334,11 +224,11 @@ func (m model) addingTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Escape):
-			m.mode = normalMode
+			m.mode = ModeNormal
 			m.editTaskNameInput.Reset()
 			return m, nil
 		case key.Matches(msg, m.keys.Quit):
-			m.mode = normalMode
+			m.mode = ModeNormal
 			m.newTaskNameInput.Reset()
 			return m, nil
 		case key.Matches(msg, m.keys.Enter):
@@ -354,7 +244,7 @@ func (m model) addingTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 
 			m.cursor++
-			m.mode = normalMode
+			m.mode = ModeNormal
 			m.newTaskNameInput.Reset()
 			return m, nil
 		}
@@ -372,11 +262,11 @@ func (m model) editTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Escape):
-			m.mode = normalMode
+			m.mode = ModeNormal
 			m.editTaskNameInput.Reset()
 			return m, nil
 		case key.Matches(msg, m.keys.Quit):
-			m.mode = normalMode
+			m.mode = ModeNormal
 			m.editTaskNameInput.Reset()
 			return m, nil
 		case key.Matches(msg, m.keys.Enter):
@@ -385,7 +275,7 @@ func (m model) editTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.tasks[m.cursor-1].Name = m.editTaskNameInput.Value()
 
-			m.mode = normalMode
+			m.mode = ModeNormal
 			m.editTaskNameInput.Reset()
 			return m, nil
 		}
@@ -401,7 +291,7 @@ func (m model) helpUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
-			m.mode = normalMode
+			m.mode = ModeNormal
 		}
 	}
 
@@ -410,13 +300,13 @@ func (m model) helpUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	switch m.mode {
-	case normalMode, doneTaskListMode:
+	case ModeNormal, ModeDoneTaskList:
 		return m.normalView()
-	case additionalMode:
+	case ModeAdditional:
 		return m.addingTaskView()
-	case editMode:
+	case ModeEdit:
 		return m.editTaskView()
-	case helpMode:
+	case ModeHelp:
 		return m.helpView()
 	}
 
@@ -431,14 +321,14 @@ func (m model) normalView() string {
 	var title termenv.Style
 	var tasksToDisplay []*todo.Task
 	switch m.mode {
-	case normalMode:
+	case ModeNormal:
 		if len(m.tasks) == 0 {
 			helpView := m.help.FullHelpView(m.keys.FullHelp())
 			return "You have no tasks.\n" + s + helpView
 		}
 		title = termenv.String("YOUR TASKS")
 		tasksToDisplay = m.tasks
-	case doneTaskListMode:
+	case ModeDoneTaskList:
 		if len(m.doneTasks) == 0 {
 			return "You have no completed tasks.\n"
 		}
