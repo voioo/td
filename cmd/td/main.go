@@ -27,18 +27,17 @@ func (k keyMap) FullHelp() [][]key.Binding {
 }
 
 type model struct {
-	cursor       int
-	mode         int
-	latestTaskID int
-	tasks        []*todo.Task
-	doneTasks    []*todo.Task
-	keys         keyMap
-	help         help.Model
-	inputStyle   lipgloss.Style
-	quitting     bool
-
+	help              help.Model
+	inputStyle        lipgloss.Style
+	keys              keyMap
+	tasks             []*todo.Task
+	doneTasks         []*todo.Task
 	newTaskNameInput  input.Model
 	editTaskNameInput input.Model
+	cursor            int
+	mode              int
+	latestTaskID      int
+	quitting          bool
 }
 
 func initializeModel() tea.Model {
