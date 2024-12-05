@@ -5,8 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-
-	todo "github.com/voioo/td"
 )
 
 var repositoryFilePath = func() string {
@@ -17,7 +15,7 @@ var repositoryFilePath = func() string {
 	return filepath.Join(homeDir, ".td.json")
 }()
 
-func loadTasksFromRepositoryFile() (todos []*todo.Task, doneTodos []*todo.Task, latestTaskID int) {
+func loadTasksFromRepositoryFile() (todos []*Task, doneTodos []*Task, latestTaskID int) {
 	f, err := os.Open(repositoryFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -27,7 +25,7 @@ func loadTasksFromRepositoryFile() (todos []*todo.Task, doneTodos []*todo.Task, 
 	}
 	defer f.Close()
 
-	var t []*todo.Task
+	var t []*Task
 	if err = json.NewDecoder(f).Decode(&t); err != nil {
 		report(err)
 	}

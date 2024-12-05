@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/charmbracelet/bubbles/key"
-)
+import "github.com/charmbracelet/bubbles/key"
 
 const (
 	KeyAdd    = "a"

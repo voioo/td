@@ -12,7 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
-	todo "github.com/voioo/td"
 )
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -30,8 +29,8 @@ type model struct {
 	help              help.Model
 	inputStyle        lipgloss.Style
 	keys              keyMap
-	tasks             []*todo.Task
-	doneTasks         []*todo.Task
+	tasks             []*Task
+	doneTasks         []*Task
 	newTaskNameInput  input.Model
 	editTaskNameInput input.Model
 	cursor            int
@@ -236,7 +235,7 @@ func (m model) addingTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.latestTaskID++
-			m.tasks = append(m.tasks, &todo.Task{
+			m.tasks = append(m.tasks, &Task{
 				ID:        m.latestTaskID,
 				Name:      m.newTaskNameInput.Value(),
 				CreatedAt: time.Now(),
@@ -318,7 +317,7 @@ func (m model) normalView() string {
 	}
 	var s string
 	var title termenv.Style
-	var tasksToDisplay []*todo.Task
+	var tasksToDisplay []*Task
 	switch m.mode {
 	case ModeNormal:
 		if len(m.tasks) == 0 {
