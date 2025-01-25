@@ -22,7 +22,7 @@ jobs:
           cache: true
 
       - name: Check formatting
-        if: matrix.os == 'ubuntu-latest'  # Only check formatting on Linux
+        if: matrix.os == 'ubuntu-latest'
         working-directory: ./cmd/td
         run: |
           if [ "$(gofmt -l . | wc -l)" -gt 0 ]; then

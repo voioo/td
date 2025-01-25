@@ -27,18 +27,18 @@ func loadTasksFromRepositoryFile() (todos []*Task, doneTodos []*Task, latestTask
 
 	var t []*Task
 	if err = json.NewDecoder(f).Decode(&t); err != nil {
-		report(err)
+		return todos, doneTodos, latestTaskID
 	}
 
 	for _, v := range t {
-		if v.IsDone {
-			doneTodos = append(doneTodos, v)
-			continue
-		}
-		todos = append(todos, v)
-
 		if v.ID >= latestTaskID {
 			latestTaskID = v.ID
+		}
+
+		if v.IsDone {
+			doneTodos = append(doneTodos, v)
+		} else {
+			todos = append(todos, v)
 		}
 	}
 
@@ -53,7 +53,10 @@ func (m model) saveTasks() {
 	defer f.Close()
 
 	todos := append(m.tasks, m.doneTasks...)
-	data, _ := json.Marshal(todos)
+	data, err := json.Marshal(todos)
+	if err != nil {
+		report(err)
+	}
 
 	if err := f.Truncate(0); err != nil {
 		report(err)
