@@ -1,0 +1,216 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.5'
+          cache: true
+          
+      - name: Run tests
+        working-directory: ./cmd/td
+        run: |
+          go vet ./...
+          go test -v ./...
+
+  release:
+    needs: test
+    name: Release - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: amd64
+            binary: td
+            archive: tar.gz
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            binary: td
+            archive: tar.gz
+          - os: macos-latest
+            platform: darwin
+            arch: amd64
+            binary: td
+            archive: tar.gz
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            binary: td
+            archive: tar.gz
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+            binary: td.exe
+            archive: zip
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.5'
+          cache: true
+
+      - name: Build Binary
+        env:
+          GOOS: ${{ matrix.platform }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          cd cmd/td
+          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ${{ matrix.binary }}
+
+      - name: Prepare Release Files
+        shell: bash
+        run: |
+          mkdir -p release
+          cp cmd/td/${{ matrix.binary }} release/
+          cp LICENSE release/
+          cp README.md release/
+          cd release
+          if [[ "${{ matrix.archive }}" == "tar.gz" ]]; then
+            tar czf ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} *
+          else
+            zip -r ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} *
+          fi
+          cd ..
+          sha256sum td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} > td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }}
+            td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+
+  homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: voioo/homebrew-tap
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+
+      - name: Update Homebrew Formula
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          # Get SHA256 for macOS Intel build
+          SHA256_INTEL=$(curl -sL https://github.com/${{ github.repository }}/releases/download/$VERSION/td_darwin_amd64.sha256 | awk '{print $1}')
+          SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/$VERSION/td_darwin_arm64.sha256 | awk '{print $1}')
+          
+          cat > Formula/td.rb << EOF
+          class Td < Formula
+            desc "Simple task management TUI tool"
+            homepage "https://github.com/voioo/td"
+            version "${VERSION#v}"
+            
+            on_macos do
+              on_arm do
+                url "https://github.com/voioo/td/releases/download/${VERSION}/td_darwin_arm64.tar.gz"
+                sha256 "${SHA256_ARM64}"
+              end
+              on_intel do
+                url "https://github.com/voioo/td/releases/download/${VERSION}/td_darwin_amd64.tar.gz"
+                sha256 "${SHA256_INTEL}"
+              end
+            end
+            
+            def install
+              bin.install "td"
+            end
+            
+            test do
+              system "#{bin}/td", "--version"
+            end
+          end
+          EOF
+          
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add Formula/td.rb
+          git commit -m "td ${VERSION}: Update formula"
+          git push
+
+  aur-publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SSH key for AUR
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          known_hosts: 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+'
+
+      - name: Install AUR dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y base-devel
+
+      - name: Update PKGBUILD
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          VERSION=${VERSION#v}
+          SHA256_AMD64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_amd64.sha256 | awk '{print $1}')
+          SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_arm64.sha256 | awk '{print $1}')
+          
+          cat > PKGBUILD << EOF
+          # Maintainer: Voislav V. <voyo@thelazysre.com>
+          pkgname=td-bin
+          pkgver=${VERSION}
+          pkgrel=1
+          pkgdesc="Simple task management TUI tool"
+          arch=('x86_64' 'aarch64')
+          url="https://github.com/voioo/td"
+          license=('0BSD')
+          provides=('td')
+          conflicts=('td')
+          depends=('git')
+          
+          source_x86_64=("https://github.com/voioo/td/releases/download/v\${pkgver}/td_linux_amd64.tar.gz")
+          source_aarch64=("https://github.com/voioo/td/releases/download/v\${pkgver}/td_linux_arm64.tar.gz")
+          sha256sums_x86_64=('${SHA256_AMD64}')
+          sha256sums_aarch64=('${SHA256_ARM64}')
+          
+          package() {
+              install -Dm755 td "\${pkgdir}/usr/bin/td"
+              install -Dm644 LICENSE "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
+              install -Dm644 README.md "\${pkgdir}/usr/share/doc/\${pkgname}/README.md"
+          }
+          EOF
+
+      - name: Publish to AUR
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git clone ssh://aur@aur.archlinux.org/td-bin.git aur-repo
+          cp PKGBUILD aur-repo/
+          cd aur-repo
+          makepkg --printsrcinfo > .SRCINFO
+          git add PKGBUILD .SRCINFO
+          git commit -m "Update to version ${{ github.ref_name }}"
+          git push 
