@@ -97,7 +97,11 @@ jobs:
           if [[ "${{ matrix.archive }}" == "tar.gz" ]]; then
             tar czf ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} *
           else
-            zip -r ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} *
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+              powershell -Command "Compress-Archive -Path * -DestinationPath ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }}"
+            else
+              zip -r ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} *
+            fi
           fi
           cd ..
           if [[ "${{ runner.os }}" == "macOS" ]]; then
