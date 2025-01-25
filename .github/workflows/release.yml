@@ -161,7 +161,7 @@ jobs:
 
       - name: Update Homebrew Formula
         env:
-          VERSION: ${{ needs.build.outputs.version }}  # Use version from build job
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
           mkdir -p Formula
           
@@ -169,8 +169,8 @@ jobs:
           SHA256_INTEL=$(curl -sL https://github.com/${{ github.repository }}/releases/download/${VERSION}/td_darwin_amd64.sha256 | awk '{print $1}')
           SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/${VERSION}/td_darwin_arm64.sha256 | awk '{print $1}')
           
-          cat > Formula/td.rb << EOF
-          class Td < Formula
+          cat > Formula/td-tui.rb << EOF
+          class TdTui < Formula
             desc "Simple task management TUI tool"
             homepage "https://github.com/voioo/td"
             version "${VERSION#v}"
@@ -198,8 +198,8 @@ jobs:
           
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add Formula/td.rb
-          git commit -m "td ${VERSION}: Update formula"
+          git add Formula/td-tui.rb
+          git commit -m "td-tui ${VERSION}: Update formula"
           git push
 
   aur-publish:
