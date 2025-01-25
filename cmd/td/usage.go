@@ -2,35 +2,55 @@ package main
 
 const (
 	usage = `
+Task Manager Controls
+====================
 
---Normal Mode--
+Normal Mode
+----------
+Navigation:
+  ↑/k        Move cursor up
+  ↓/j        Move cursor down
+  ←/h        Move left
+  →/l        Move right/edit task
+  Enter      Mark task as done/undone
 
-↓ - move cursor one line down
-↑ - move cursor one line up
-a - add a new task(move to additional mode)
-d - remove a task
-→ - edit the task name(mode to edit mode)
-? - help(switch to help mode)
-enter - mark as done
-t - switch to done tasks list mode
-esc, ctrl+c - save tasks and close this app
+Task Actions:
+  a          Add new task
+  d          Delete task
+  t          Toggle between active/completed tasks
 
---Done Tasks List Mode--
+Other:
+  ?          Show/hide this help
+  Esc/Ctrl+C Save and exit
 
-↓ - move cursor one line down
-↑ - move cursor one line up
-d - remove a task
-t - switch to normal mode
-enter - mark as done
-ctrl+c - save tasks and close this app
 
---Edit Mode--
+Done Tasks Mode
+--------------
+Navigation:
+  ↑/k        Move cursor up
+  ↓/j        Move cursor down
+  Enter      Mark task as undone
 
-← - go back
-esc - switch to normal mode
-enter - submit
+Task Actions:
+  d          Delete task
+  t          Switch to normal mode
+  Esc/Ctrl+C Save and exit
 
---Help Mode--
-esc - switch to normal mode
+
+Edit Mode
+---------
+  Enter      Save changes
+  Esc        Cancel and return to normal mode
+  Ctrl+C     Save and exit
+
+
+Add Task Mode
+------------
+  Enter      Save new task
+  Esc        Cancel and return to normal mode
+  Ctrl+C     Save and exit
+
+
+Press Esc to exit this help screen
 `
 )
