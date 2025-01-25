@@ -4,13 +4,37 @@ td is a To-do TUI app written in golang
 
 ## Installation
 
-### MacOS
+### macOS
 ```bash
-# Add tap
 brew tap voioo/td
-
-# Install
 brew install td-tui
+```
+
+### Arch Linux
+```bash
+yay -S td-bin
+```
+or
+```bash
+paru -S td-bin
+```
+or
+```bash
+git clone https://aur.archlinux.org/td-bin.git
+cd td-bin
+makepkg -si
+```
+
+### Ubuntu/Debian
+```bash
+curl -LO https://github.com/voioo/td/releases/latest/download/td_linux_amd64.tar.gz
+sudo tar xf td_linux_amd64.tar.gz -C /usr/local/bin td
+```
+
+### RHEL/Fedora/CentOS
+```bash
+curl -LO https://github.com/voioo/td/releases/latest/download/td_linux_amd64.tar.gz
+sudo tar xf td_linux_amd64.tar.gz -C /usr/local/bin td
 ```
 
 You can also check the releases page on Github and download the one you need.
