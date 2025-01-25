@@ -1,0 +1,73 @@
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    dir: ./cmd/td
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+nfpms:
+  - package_name: td
+    homepage: https://github.com/voioo/td
+    description: Your simple task management TUI tool
+    maintainer: Voislav V. <voyo@thelazysre.com>
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    dependencies:
+      - git
+    recommends:
+      - bash
+
+brews:
+  - name: td
+    tap:
+      owner: voioo
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/voioo/td
+    description: Your simple task management TUI tool
+    license: MIT
+    test: |
+      system "#{bin}/td --version"
+    install: |
+      bin.install "td"
+
+checksum:
+  name_template: 'checksums.txt'
+
+signs:
+  - artifacts: checksum
+    args: ["--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}"]
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - Merge pull request 

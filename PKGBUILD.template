@@ -1,0 +1,19 @@
+# Maintainer: Your Name <voyo@thelazysre.com>
+pkgname=td-bin
+pkgver=${VERSION}
+pkgrel=1
+pkgdesc="Your simple task management TUI tool"
+arch=('x86_64' 'aarch64')
+url="https://github.com/voioo/td"
+license=('MIT')
+provides=('td')
+conflicts=('td')
+
+source_x86_64=("https://github.com/voioo/td/releases/download/v$pkgver/td_Linux_x86_64.tar.gz")
+source_aarch64=("https://github.com/voioo/td/releases/download/v$pkgver/td_Linux_arm64.tar.gz")
+sha256sums_x86_64=('SKIP')
+sha256sums_aarch64=('SKIP')
+
+package() {
+    install -Dm755 td "${pkgdir}/usr/bin/td"
+} 
