@@ -3,18 +3,10 @@ name: Build Release
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - '**.go'
-      - '.goreleaser.yaml'
-      - '.github/workflows/goreleaser.yml'
+    branches: [ main ]
   push:
-    branches:
-      - main
-    tags: ['v*']
-    paths:
-      - '**.go'
-      - '.goreleaser.yaml'
-      - '.github/workflows/goreleaser.yml'
+    branches: [ main ]
+    tags: [ 'v*' ]
 
 permissions:
   contents: write
@@ -33,17 +25,18 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v4
         with:
-          go-version: 1.23.5
+          go-version: '1.23.5'
           cache: true
 
       # Run tests before proceeding
       - name: Run Tests
-        run: go test ./...
-        working-directory: ./cmd/td
+        run: |
+          cd cmd/td
+          go test ./...
 
-      # For PRs, just check if the release would work
+      # For PRs and non-tag pushes, just check if the release would work
       - name: GoReleaser Check
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v'))
         uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
@@ -51,14 +44,15 @@ jobs:
           args: check
           workdir: ./cmd/td
 
-      # For main branch pushes, create a new tag
+      # For main branch pushes (not PRs), create a new tag
       - name: Bump version and push tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: anothrNick/github-tag-action@1.67.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-          DEFAULT_BUMP: patch
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: main
+          default_bump: patch
           
       # For tags, do the actual release
       - name: Import GPG key
