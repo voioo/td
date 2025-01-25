@@ -49,6 +49,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      new_version: ${{ steps.tag_version.outputs.new_version }}
+      tag: ${{ steps.tag_version.outputs.new_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,4 +64,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: main
           default_bump: patch
-          tag_prefix: v 
+          tag_prefix: v
+          push_tag: true 
