@@ -30,7 +30,9 @@ jobs:
 
       # Run tests before proceeding
       - name: Run Tests
-        run: go test ./...
+        run: |
+          cd cmd/td
+          go test ./...
 
       # For PRs and non-tag pushes, just check if the release would work
       - name: GoReleaser Check
@@ -40,6 +42,7 @@ jobs:
           distribution: goreleaser
           version: latest
           args: check
+          workdir: ./cmd/td
 
       # For main branch pushes (not PRs), create a new tag
       - name: Bump version and push tag
@@ -75,6 +78,7 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --clean
+          workdir: ./cmd/td
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
