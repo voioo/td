@@ -234,7 +234,6 @@ jobs:
         env:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          # Remove 'v' prefix if present
           VERSION=${VERSION#v}
           
           echo "Using version: $VERSION"
@@ -242,12 +241,9 @@ jobs:
           SHA256_AMD64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_amd64.sha256 | awk '{print $1}')
           SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_arm64.sha256 | awk '{print $1}')
           
-          echo "AMD64 SHA: $SHA256_AMD64"
-          echo "ARM64 SHA: $SHA256_ARM64"
-          
           cat > PKGBUILD << EOF
           # Maintainer: Voislav V. <voyo@thelazysre.com>
-          pkgname=td-bin
+          pkgname=td-tui
           pkgver=${VERSION}
           pkgrel=1
           pkgdesc="Simple task management TUI tool"
