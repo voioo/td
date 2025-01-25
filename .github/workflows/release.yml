@@ -128,7 +128,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ needs.build.outputs.version }}
           files: td-*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -141,6 +141,8 @@ jobs:
         with:
           repository: voioo/homebrew-tap
           token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          ref: main
+          fetch-depth: 0
 
       - name: Update Homebrew Formula
         env:
@@ -186,6 +188,8 @@ jobs:
   aur-publish:
     needs: release
     runs-on: ubuntu-latest
+    container: 
+      image: archlinux:base-devel
     steps:
       - uses: actions/checkout@v4
 
@@ -195,14 +199,9 @@ jobs:
           key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           known_hosts: 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+'
 
-      - name: Install AUR dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y base-devel
-
       - name: Update PKGBUILD
         env:
-          VERSION: ${{ github.ref_name }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
           VERSION=${VERSION#v}
           SHA256_AMD64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_amd64.sha256 | awk '{print $1}')
@@ -233,14 +232,21 @@ jobs:
           }
           EOF
 
+      - name: Generate .SRCINFO
+        run: |
+          useradd builduser -m
+          chown -R builduser:builduser .
+          su builduser -c "makepkg --printsrcinfo > .SRCINFO"
+
       - name: Publish to AUR
         run: |
+          pacman -Sy --noconfirm git
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git clone ssh://aur@aur.archlinux.org/td-bin.git aur-repo
           cp PKGBUILD aur-repo/
+          cp .SRCINFO aur-repo/
           cd aur-repo
-          makepkg --printsrcinfo > .SRCINFO
           git add PKGBUILD .SRCINFO
-          git commit -m "Update to version ${{ github.ref_name }}"
+          git commit -m "Update to version ${{ needs.build.outputs.version }}"
           git push 
