@@ -134,7 +134,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   homebrew:
-    needs: release
+    needs: [build, release]  # Need both to get version and ensure release exists
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -146,11 +146,13 @@ jobs:
 
       - name: Update Homebrew Formula
         env:
-          VERSION: ${{ github.ref_name }}
+          VERSION: ${{ needs.build.outputs.version }}  # Use version from build job
         run: |
+          mkdir -p Formula
+          
           # Get SHA256 for macOS Intel build
-          SHA256_INTEL=$(curl -sL https://github.com/${{ github.repository }}/releases/download/$VERSION/td_darwin_amd64.sha256 | awk '{print $1}')
-          SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/$VERSION/td_darwin_arm64.sha256 | awk '{print $1}')
+          SHA256_INTEL=$(curl -sL https://github.com/${{ github.repository }}/releases/download/${VERSION}/td_darwin_amd64.sha256 | awk '{print $1}')
+          SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/${VERSION}/td_darwin_arm64.sha256 | awk '{print $1}')
           
           cat > Formula/td.rb << EOF
           class Td < Formula
@@ -186,7 +188,7 @@ jobs:
           git push
 
   aur-publish:
-    needs: release
+    needs: [build, release]  # Need both to get version and ensure release exists
     runs-on: ubuntu-latest
     container: 
       image: archlinux:base-devel
@@ -203,9 +205,18 @@ jobs:
         env:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
+          # Remove 'v' prefix if present
           VERSION=${VERSION#v}
+          
+          # Debug output
+          echo "Using version: $VERSION"
+          
           SHA256_AMD64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_amd64.sha256 | awk '{print $1}')
           SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_arm64.sha256 | awk '{print $1}')
+          
+          # Debug output
+          echo "AMD64 SHA: $SHA256_AMD64"
+          echo "ARM64 SHA: $SHA256_ARM64"
           
           cat > PKGBUILD << EOF
           # Maintainer: Voislav V. <voyo@thelazysre.com>
