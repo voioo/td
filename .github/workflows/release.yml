@@ -4,7 +4,12 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:  # Add this to allow manual triggers for testing
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v0.1.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -102,9 +107,12 @@ jobs:
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.ref_name }}
           files: |
             td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }}
             td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   homebrew:
     needs: release
