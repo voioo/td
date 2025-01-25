@@ -212,13 +212,24 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pacman -Sy --noconfirm git openssh base-devel
+          pacman -Sy --noconfirm git openssh base-devel curl
+
+      - name: Setup SSH
+        run: |
+          mkdir -p /root/.ssh
+          echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+" > /root/.ssh/known_hosts
+          chmod 600 /root/.ssh/known_hosts
 
       - name: Install SSH key for AUR
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           known_hosts: 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+'
+          name: id_ed25519
+          config: |
+            Host aur.archlinux.org
+              IdentityFile ~/.ssh/id_ed25519
+              User aur
 
       - name: Update PKGBUILD
         env:
@@ -278,4 +289,4 @@ jobs:
           cd aur-repo
           git add PKGBUILD .SRCINFO
           git commit -m "Update to version ${VERSION}"
-          git push 
+          git push
