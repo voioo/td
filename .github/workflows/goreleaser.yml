@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - '**.go'
+      - '**.yaml' # temporary
   push:
     branches:
       - main
