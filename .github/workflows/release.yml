@@ -68,9 +68,22 @@ jobs:
             binary: td.exe
             archive: zip
     outputs:
-      version: ${{ github.ref_name }}
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Version
+        id: get_version
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "version=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -82,9 +95,10 @@ jobs:
           GOOS: ${{ matrix.platform }}
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 0
+          VERSION: ${{ steps.get_version.outputs.version }}
         run: |
           cd cmd/td
-          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ${{ matrix.binary }}
+          go build -ldflags="-s -w -X main.version=$VERSION" -o ${{ matrix.binary }}
 
       - name: Prepare Release Files
         shell: bash
@@ -129,6 +143,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.build.outputs.version }}
+          name: Release ${{ needs.build.outputs.version }}
           files: td-*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -188,12 +203,16 @@ jobs:
           git push
 
   aur-publish:
-    needs: [build, release]  # Need both to get version and ensure release exists
+    needs: [build, release]
     runs-on: ubuntu-latest
     container: 
       image: archlinux:base-devel
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm git openssh base-devel
 
       - name: Install SSH key for AUR
         uses: shimataro/ssh-key-action@v2
@@ -208,13 +227,11 @@ jobs:
           # Remove 'v' prefix if present
           VERSION=${VERSION#v}
           
-          # Debug output
           echo "Using version: $VERSION"
           
           SHA256_AMD64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_amd64.sha256 | awk '{print $1}')
           SHA256_ARM64=$(curl -sL https://github.com/${{ github.repository }}/releases/download/v${VERSION}/td_linux_arm64.sha256 | awk '{print $1}')
           
-          # Debug output
           echo "AMD64 SHA: $SHA256_AMD64"
           echo "ARM64 SHA: $SHA256_ARM64"
           
@@ -250,14 +267,15 @@ jobs:
           su builduser -c "makepkg --printsrcinfo > .SRCINFO"
 
       - name: Publish to AUR
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          pacman -Sy --noconfirm git
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git clone ssh://aur@aur.archlinux.org/td-bin.git aur-repo
+          git clone ssh://aur@aur.archlinux.org/td.git aur-repo
           cp PKGBUILD aur-repo/
           cp .SRCINFO aur-repo/
           cd aur-repo
           git add PKGBUILD .SRCINFO
-          git commit -m "Update to version ${{ needs.build.outputs.version }}"
+          git commit -m "Update to version ${VERSION}"
           git push 
