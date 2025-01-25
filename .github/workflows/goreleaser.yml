@@ -5,13 +5,16 @@ on:
   pull_request:
     paths:
       - '**.go'
-      - '**.yaml' # temporary
+      - '.goreleaser.yaml'
+      - '.github/workflows/goreleaser.yml'
   push:
     branches:
       - main
     tags: ['v*']
     paths:
       - '**.go'
+      - '.goreleaser.yaml'
+      - '.github/workflows/goreleaser.yml'
 
 permissions:
   contents: write
@@ -19,18 +22,36 @@ permissions:
   packages: write
 
 jobs:
-  release:
+  goreleaser:
     runs-on: ubuntu-latest
-    env:
-      flags: ""
     steps:
-      - name: Set snapshot flags for PR events
-        if: github.event_name == 'pull_request'
-        run: echo "flags=--snapshot" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Go environment
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.1
+          cache: true
+
+      # Run tests before proceeding
+      - name: Run Tests
+        run: go test ./...
+        working-directory: ./cmd/td
+
+      # For PRs, just check if the release would work
+      - name: GoReleaser Check
+        if: github.event_name == 'pull_request'
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: check
+          workdir: ./cmd/td
+
+      # For main branch pushes, create a new tag
       - name: Bump version and push tag
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: anothrNick/github-tag-action@1.67.0
@@ -38,26 +59,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
           DEFAULT_BUMP: patch
+          
+      # For tags, do the actual release
       - name: Import GPG key
+        if: startsWith(github.ref, 'refs/tags/v')
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-      - name: Setup Go environment
-        uses: actions/setup-go@v4
+
+      # Add SSH key for AUR
+      - name: Install SSH key for AUR
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: shimataro/ssh-key-action@v2
         with:
-          go-version: 1.22.1
-          cache: true
+          key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          known_hosts: 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+'
+          
       - name: Run GoReleaser
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
           version: latest
-          args: release --clean ${{ env.flags }}
+          args: release --clean
           workdir: ./cmd/td
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
-          GOPATH: /home/runner/go
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          AUR_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}

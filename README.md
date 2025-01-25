@@ -21,6 +21,6 @@ This project is a derivative of [todo-cli](https://github.com/yuzuy/todo-cli), w
 
 ## License
 
-This project is released under the MIT License. For more details, please refer to the [LICENSE](LICENSE) file.
+This project is released under the BSD Zero Clause License (0BSD). For more details, please refer to the [LICENSE](LICENSE) file.
 
 ---

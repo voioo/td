@@ -8,39 +8,81 @@ builds:
     goos:
       - linux
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
     dir: ./cmd/td
     ldflags:
       - -s -w -X main.version={{.Version}}
+    ignore:
+      - goos: windows
+        goarch: arm64
 
 archives:
   - format: tar.gz
+    # use zip for windows
+    format_overrides:
+      - goos: windows
+        format: zip
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
-    format_overrides:
-      - goos: windows
-        format: zip
+    files:
+      - LICENSE
+      - README.md
 
 nfpms:
   - package_name: td
     homepage: https://github.com/voioo/td
     description: Your simple task management TUI tool
     maintainer: Voislav V. <voyo@thelazysre.com>
-    license: MIT
+    license: 0BSD
     formats:
       - deb
       - rpm
       - apk
-      - archlinux
     dependencies:
       - git
     recommends:
       - bash
+
+# Add AUR publishing configuration
+aurs:
+  - name: td-bin
+    homepage: https://github.com/voioo/td
+    description: Your simple task management TUI tool
+    maintainers:
+      - 'Voislav V. <voyo@thelazysre.com>'
+    license: 0BSD
+    private_key: '{{ .Env.AUR_KEY }}'
+    git_url: 'ssh://aur@aur.archlinux.org/td-bin.git'
+    package: |-
+      # Maintainer: Voislav V. <voyo@thelazysre.com>
+      pkgname=td-bin
+      pkgver={{ .Version }}
+      pkgrel=1
+      pkgdesc="Your simple task management TUI tool"
+      arch=('x86_64' 'aarch64')
+      url="https://github.com/voioo/td"
+      license=('0BSD')
+      provides=('td')
+      conflicts=('td')
+      depends=('git')
+      optdepends=('bash: for shell completion')
+
+      source_x86_64=("https://github.com/voioo/td/releases/download/v$pkgver/td_Linux_x86_64.tar.gz")
+      source_aarch64=("https://github.com/voioo/td/releases/download/v$pkgver/td_Linux_arm64.tar.gz")
+      sha256sums_x86_64=('{{ .Artifacts.td_Linux_x86_64.tar.gz.Checksum }}')
+      sha256sums_aarch64=('{{ .Artifacts.td_Linux_arm64.tar.gz.Checksum }}')
+
+      package() {
+          install -Dm755 td "${pkgdir}/usr/bin/td"
+          install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+          install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+      }
 
 brews:
   - name: td
@@ -50,11 +92,16 @@ brews:
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://github.com/voioo/td
     description: Your simple task management TUI tool
-    license: MIT
+    license: 0BSD
     test: |
       system "#{bin}/td --version"
     install: |
       bin.install "td"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    folder: Formula
 
 checksum:
   name_template: 'checksums.txt'
@@ -70,4 +117,5 @@ changelog:
       - '^docs:'
       - '^test:'
       - '^ci:'
-      - Merge pull request 
+      - Merge pull request
+      - '^chore' 
