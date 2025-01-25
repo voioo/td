@@ -35,9 +35,9 @@ jobs:
           go vet ./...
           go test -v ./...
 
-  release:
+  build:
     needs: test
-    name: Release - ${{ matrix.os }}
+    name: Build - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -67,12 +67,10 @@ jobs:
             arch: amd64
             binary: td.exe
             archive: zip
-
+    outputs:
+      version: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -102,15 +100,34 @@ jobs:
             zip -r ../td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} *
           fi
           cd ..
-          sha256sum td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} > td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+          if [[ "${{ runner.os }}" == "macOS" ]]; then
+            shasum -a 256 td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} > td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+          elif [[ "${{ runner.os }}" == "Windows" ]]; then
+            certutil -hashfile td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} SHA256 | findstr /v "hash" > td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+          else
+            sha256sum td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }} > td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+          fi
 
-      - name: Upload Release
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: td-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }}
+            td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          files: |
-            td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }}
-            td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+          files: td-*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
