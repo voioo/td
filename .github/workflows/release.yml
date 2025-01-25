@@ -214,11 +214,10 @@ jobs:
         run: |
           pacman -Sy --noconfirm git openssh base-devel curl
 
-      - name: Setup SSH
+      - name: Add AUR SSH host key
         run: |
           mkdir -p /root/.ssh
-          echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+" > /root/.ssh/known_hosts
-          chmod 600 /root/.ssh/known_hosts
+          ssh-keyscan -t ed25519 aur.archlinux.org >> /root/.ssh/known_hosts
 
       - name: Install SSH key for AUR
         uses: shimataro/ssh-key-action@v2
