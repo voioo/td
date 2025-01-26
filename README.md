@@ -6,9 +6,23 @@ td is a To-do TUI app written in golang
 
 ### macOS
 ```bash
-brew tap voioo/td
+brew tap voioo/homebrew-tap
 brew install td-tui
 ```
+
+<details>
+<summary>Manual Installation</summary>
+
+```bash
+# For Apple Silicon Macs:
+curl -LO https://github.com/voioo/td/releases/latest/download/td_darwin_arm64.tar.gz
+sudo tar xf td_darwin_arm64.tar.gz -C /usr/local/bin td
+
+# For Intel Macs:
+curl -LO https://github.com/voioo/td/releases/latest/download/td_darwin_amd64.tar.gz
+sudo tar xf td_darwin_amd64.tar.gz -C /usr/local/bin td
+```
+</details>
 
 ### Arch Linux
 ```bash
