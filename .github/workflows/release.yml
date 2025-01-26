@@ -143,7 +143,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.build.outputs.version }}
-          name: Release ${{ needs.build.outputs.version }}
+          name: ${{ needs.build.outputs.version }}
           files: td-*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
