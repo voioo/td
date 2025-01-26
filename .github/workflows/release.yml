@@ -15,6 +15,7 @@ permissions:
   contents: write
   id-token: write
   packages: write
+  actions: read
 
 jobs:
   test:

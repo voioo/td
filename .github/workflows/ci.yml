@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: read
+  actions: read
 
 jobs:
   test:
@@ -51,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN }}
           
       - name: Create and push tag
         run: |
@@ -75,4 +76,6 @@ jobs:
           git push origin "$new_tag"
           
           echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
-        id: create_tag 
+        id: create_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }} 
