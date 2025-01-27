@@ -33,9 +33,9 @@ jobs:
 
       - name: Validate commit messages
         run: |
-          # Get all commits in the PR
+          # Get all commits in the PR (excluding merge commits)
           git fetch origin ${{ github.base_ref }}
-          COMMITS=$(git log --pretty=format:"%s" origin/${{ github.base_ref }}..HEAD)
+          COMMITS=$(git log --no-merges --pretty=format:"%s" origin/${{ github.base_ref }}..HEAD)
           
           # Validate each commit message
           echo "$COMMITS" | while read -r msg; do
