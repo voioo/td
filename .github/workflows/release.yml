@@ -111,7 +111,7 @@ jobs:
           cd cmd/td
           COMMIT_SHORT=${COMMIT:0:7}
           echo "Building with version=$VERSION commit=$COMMIT_SHORT date=$DATE"  # Debug output
-          go build -ldflags="-s -w -X 'main.version=$VERSION' -X 'main.commit=$COMMIT_SHORT' -X 'main.date=$DATE'" -o ${{ matrix.binary }}
+          go build -trimpath -ldflags="-s -w -X 'main.version=$VERSION' -X 'main.commit=$COMMIT_SHORT' -X 'main.date=$DATE'" -o ${{ matrix.binary }}
 
       - name: Prepare Release Files
         shell: bash
@@ -290,7 +290,7 @@ jobs:
         run: |
           useradd builduser -m
           chown -R builduser:builduser .
-          su builduser -c "makepkg --printsrcinfo > .SRCINFO"
+          su builduser -c "makepkg --cleanbuild --printsrcinfo > .SRCINFO"
 
       - name: Publish to AUR
         env:
