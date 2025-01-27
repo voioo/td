@@ -38,7 +38,7 @@ jobs:
 
   build:
     needs: test
-    name: Build - ${{ matrix.os }}
+    name: Build - ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -68,6 +68,12 @@ jobs:
             arch: amd64
             binary: td.exe
             archive: zip
+          - os: windows-latest
+            platform: windows
+            arch: arm64
+            binary: td.exe
+            archive: zip
+      fail-fast: false
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
@@ -135,6 +141,13 @@ jobs:
           path: |
             td_${{ matrix.platform }}_${{ matrix.arch }}.${{ matrix.archive }}
             td_${{ matrix.platform }}_${{ matrix.arch }}.sha256
+
+      - name: Upload Install Script
+        if: matrix.platform == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-script
+          path: install.ps1
 
   release:
     needs: build
