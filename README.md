@@ -51,6 +51,28 @@ curl -LO https://github.com/voioo/td/releases/latest/download/td_linux_amd64.tar
 sudo tar xf td_linux_amd64.tar.gz -C /usr/local/bin td
 ```
 
+### Windows
+Open PowerShell as Administrator and run:
+```powershell
+irm https://raw.githubusercontent.com/voioo/td/main/install.ps1 | iex
+```
+
+<details>
+<summary>Manual Installation</summary>
+
+```powershell
+# For AMD64 systems:
+Invoke-WebRequest -Uri https://github.com/voioo/td/releases/latest/download/td_windows_amd64.zip -OutFile td.zip
+Expand-Archive td.zip -DestinationPath "$env:LOCALAPPDATA\Programs\td"
+$env:Path += ";$env:LOCALAPPDATA\Programs\td"
+
+# For ARM64 systems:
+Invoke-WebRequest -Uri https://github.com/voioo/td/releases/latest/download/td_windows_arm64.zip -OutFile td.zip
+Expand-Archive td.zip -DestinationPath "$env:LOCALAPPDATA\Programs\td"
+$env:Path += ";$env:LOCALAPPDATA\Programs\td"
+```
+</details>
+
 You can also check the releases page on Github and download the one you need.
 
 ## Usage
