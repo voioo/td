@@ -25,17 +25,19 @@ const (
 )
 
 type keyMap struct {
-	Add    key.Binding
-	Up     key.Binding
-	Down   key.Binding
-	Delete key.Binding
-	Left   key.Binding
-	Right  key.Binding
-	Enter  key.Binding
-	Escape key.Binding
-	Type   key.Binding
-	Help   key.Binding
-	Quit   key.Binding
+	Add      key.Binding
+	Up       key.Binding
+	Down     key.Binding
+	Delete   key.Binding
+	Left     key.Binding
+	Right    key.Binding
+	Enter    key.Binding
+	Escape   key.Binding
+	Type     key.Binding
+	Help     key.Binding
+	Quit     key.Binding
+	Priority key.Binding
+	Filter   key.Binding
 }
 
 var keys = keyMap{
@@ -83,4 +85,20 @@ var keys = keyMap{
 		key.WithKeys(KeyQuit, "ctrl+c"),
 		key.WithHelp(KeyQuit, "quit"),
 	),
+	Priority: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "set priority"),
+	),
+	Filter: key.NewBinding(
+		key.WithKeys("f"),
+		key.WithHelp("f", "filter by priority"),
+	),
+}
+
+func (k keyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right},
+		{k.Type, k.Priority, k.Filter},
+		{k.Help, k.Quit},
+	}
 }
