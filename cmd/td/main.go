@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -12,6 +13,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
+)
+
+// Version information set by build flags
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 )
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -370,6 +378,17 @@ func (m model) helpView() string {
 }
 
 func main() {
+	// Setup flags
+	versionFlag := flag.Bool("version", false, "print version information")
+	flag.BoolVar(versionFlag, "v", false, "print version information (shorthand)")
+
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("td %s (commit: %s, built at: %s)\n", version, commit, date)
+		os.Exit(0)
+	}
+
 	p := tea.NewProgram(initializeModel(), tea.WithAltScreen())
 	p.Run()
 }
