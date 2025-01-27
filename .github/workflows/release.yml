@@ -84,6 +84,7 @@ jobs:
           else
             echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           fi
+          echo "date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -97,9 +98,11 @@ jobs:
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 0
           VERSION: ${{ steps.get_version.outputs.version }}
+          COMMIT: ${{ github.sha }}
+          DATE: ${{ steps.get_version.outputs.date }}
         run: |
           cd cmd/td
-          go build -ldflags="-s -w -X main.version=$VERSION" -o ${{ matrix.binary }}
+          go build -ldflags="-s -w -X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o ${{ matrix.binary }}
 
       - name: Prepare Release Files
         shell: bash

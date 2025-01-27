@@ -2,9 +2,6 @@ package main
 
 const (
 	usage = `
-Task Manager Controls
-====================
-
 Navigation Controls
 -----------------
   ↑/k      Move up          ↓/j      Move down
