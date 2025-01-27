@@ -431,7 +431,7 @@ func (m model) editTaskView() string {
 
 func (m model) helpView() string {
 	title := termenv.String("USAGE").Bold().Underline()
-	return fmt.Sprintf("%v"+usage, title)
+	return fmt.Sprintf("%v\n\n%s", title, getUsageView())
 }
 
 func main() {
