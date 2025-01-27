@@ -108,7 +108,11 @@ jobs:
           DATE: ${{ steps.get_version.outputs.date }}
         run: |
           cd cmd/td
-          go build -ldflags="-s -w -X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o ${{ matrix.binary }}
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            go build -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT:0:7} -X main.date=${DATE}" -o ${{ matrix.binary }}
+          else
+            go build -ldflags="-s -w -X main.version=$VERSION -X main.commit=${COMMIT:0:7} -X main.date=$DATE" -o ${{ matrix.binary }}
+          fi
 
       - name: Prepare Release Files
         shell: bash
