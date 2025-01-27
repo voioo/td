@@ -5,51 +5,29 @@ const (
 Task Manager Controls
 ====================
 
-Normal Mode
-----------
-Navigation:
-  ↑/k        Move cursor up
-  ↓/j        Move cursor down
-  ←/h        Move left
-  →/l        Move right/edit task
-  Enter      Mark task as done/undone
+Navigation Controls
+-----------------
+  ↑/k      Move up          ↓/j      Move down
+  ←/h      Move left        →/l      Move right/edit
+  Enter    Toggle done      Esc      Back/Exit
+  Ctrl+C   Save and exit
 
-Task Actions:
-  a          Add new task
-  d          Delete task
-  t          Toggle between active/completed tasks
+Task Management
+-------------
+  a        Add new task
+  d        Delete task
+  t        Toggle active/completed tasks view
+  ?        Show/hide help
 
-Other:
-  ?          Show/hide this help
-  Esc/Ctrl+C Save and exit
+Mode-Specific Controls
+--------------------
+Edit Mode:
+  Enter    Save changes
+  Esc      Cancel and return
 
-
-Done Tasks Mode
---------------
-Navigation:
-  ↑/k        Move cursor up
-  ↓/j        Move cursor down
-  Enter      Mark task as undone
-
-Task Actions:
-  d          Delete task
-  t          Switch to normal mode
-  Esc/Ctrl+C Save and exit
-
-
-Edit Mode
----------
-  Enter      Save changes
-  Esc        Cancel and return to normal mode
-  Ctrl+C     Save and exit
-
-
-Add Task Mode
-------------
-  Enter      Save new task
-  Esc        Cancel and return to normal mode
-  Ctrl+C     Save and exit
-
+Add Task Mode:
+  Enter    Save new task
+  Esc      Cancel and return
 
 Press Esc to exit this help screen
 `
