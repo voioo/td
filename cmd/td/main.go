@@ -25,12 +25,15 @@ func (k keyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-func (k keyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
-		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right},
-		{k.Type, k.Help, k.Escape},
-	}
-}
+type filterMode int
+
+const (
+	FilterAll filterMode = iota
+	FilterNone
+	FilterLow
+	FilterMedium
+	FilterHigh
+)
 
 type model struct {
 	help              help.Model
@@ -44,6 +47,7 @@ type model struct {
 	mode              int
 	latestTaskID      int
 	quitting          bool
+	filter            filterMode
 }
 
 func initializeModel() tea.Model {
@@ -98,14 +102,59 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		tasksToDisplay := m.filteredTasks()
 		switch {
 		case key.Matches(msg, m.keys.Down):
-			if m.cursor < len(m.tasks) {
+			if m.cursor < len(tasksToDisplay) {
 				m.cursor++
 			}
 		case key.Matches(msg, m.keys.Up):
 			if m.cursor > 1 {
 				m.cursor--
+			}
+		case key.Matches(msg, m.keys.Right):
+			if m.cursor == 0 || m.cursor > len(tasksToDisplay) {
+				break
+			}
+			taskToEdit := tasksToDisplay[m.cursor-1]
+			m.mode = ModeEdit
+			m.editTaskNameInput.Placeholder = taskToEdit.Name
+			m.editTaskNameInput.Focus()
+			return m, nil
+		case key.Matches(msg, m.keys.Enter):
+			if m.cursor == 0 || m.cursor > len(tasksToDisplay) {
+				break
+			}
+			taskToComplete := tasksToDisplay[m.cursor-1]
+
+			// Find and move task to done tasks
+			for i, task := range m.tasks {
+				if task.ID == taskToComplete.ID {
+					task.IsDone = true
+					m.doneTasks = append(m.doneTasks, task)
+					m.tasks = append(m.tasks[:i], m.tasks[i+1:]...)
+					break
+				}
+			}
+
+			// Adjust cursor
+			if len(m.filteredTasks()) == 0 {
+				m.cursor = 0
+			} else if m.cursor > len(m.filteredTasks()) {
+				m.cursor = len(m.filteredTasks())
+			}
+		case key.Matches(msg, m.keys.Priority):
+			if len(tasksToDisplay) > 0 && m.cursor > 0 && m.cursor <= len(tasksToDisplay) {
+				taskToUpdate := tasksToDisplay[m.cursor-1]
+				// Find and update priority in original slice
+				for _, task := range m.tasks {
+					if task.ID == taskToUpdate.ID {
+						task.Priority = (task.Priority + 1) % 4
+						m.saveTasks()
+						m.followTask(task.ID) // Track task after priority change
+						break
+					}
+				}
 			}
 		case key.Matches(msg, m.keys.Add):
 			m.mode = ModeAdditional
@@ -115,36 +164,27 @@ func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor == 0 {
 				break
 			}
-			m.tasks = append(m.tasks[:m.cursor-1], m.tasks[m.cursor:]...)
-			if len(m.tasks) == 0 {
-				m.cursor = 0
-			} else {
-				m.cursor = 1
-			}
-		case key.Matches(msg, m.keys.Right):
-			if m.cursor == 0 {
+
+			// Get the actual task from filtered view
+			tasksToDisplay := m.filteredTasks()
+			if m.cursor > len(tasksToDisplay) {
 				break
 			}
-			m.mode = ModeEdit
-			m.editTaskNameInput.Placeholder = m.tasks[m.cursor-1].Name
-			m.editTaskNameInput.Focus()
-			return m, nil
-		case key.Matches(msg, m.keys.Help):
-			m.mode = ModeHelp
-		case key.Matches(msg, m.keys.Enter):
-			if m.cursor == 0 {
-				break
+			taskToDelete := tasksToDisplay[m.cursor-1]
+
+			// Find and delete the task from original slice
+			for i, task := range m.tasks {
+				if task.ID == taskToDelete.ID {
+					m.tasks = append(m.tasks[:i], m.tasks[i+1:]...)
+					break
+				}
 			}
 
-			t := m.tasks[m.cursor-1]
-			t.IsDone = true
-			m.doneTasks = append(m.doneTasks, t)
-			m.tasks = append(m.tasks[:m.cursor-1], m.tasks[m.cursor:]...)
-
-			if len(m.tasks) == 0 {
+			// Adjust cursor
+			if len(m.filteredTasks()) == 0 {
 				m.cursor = 0
-			} else {
-				m.cursor = 1
+			} else if m.cursor > len(m.filteredTasks()) {
+				m.cursor = len(m.filteredTasks())
 			}
 		case key.Matches(msg, m.keys.Type):
 			if m.mode == ModeDoneTaskList {
@@ -165,6 +205,11 @@ func (m model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			m.saveTasks()
 			return m, tea.Quit
+		case key.Matches(msg, m.keys.Filter):
+			m.filter = (m.filter + 1) % 5 // 5 is the number of filter modes
+			return m, nil
+		case key.Matches(msg, m.keys.Help):
+			m.mode = ModeHelp
 		}
 	}
 
@@ -278,7 +323,18 @@ func (m model) editTaskUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.editTaskNameInput.Value() == "" {
 				return m, nil
 			}
-			m.tasks[m.cursor-1].Name = m.editTaskNameInput.Value()
+
+			tasksToDisplay := m.filteredTasks()
+			if m.cursor > 0 && m.cursor <= len(tasksToDisplay) {
+				taskToEdit := tasksToDisplay[m.cursor-1]
+				// Find and update name in original slice
+				for _, task := range m.tasks {
+					if task.ID == taskToEdit.ID {
+						task.Name = m.editTaskNameInput.Value()
+						break
+					}
+				}
+			}
 
 			m.mode = ModeNormal
 			m.editTaskNameInput.Reset()
@@ -322,17 +378,17 @@ func (m model) normalView() string {
 	if m.quitting {
 		return "Bye!\n"
 	}
-	var s string
+	var s strings.Builder
 	var title termenv.Style
 	var tasksToDisplay []*Task
 	switch m.mode {
 	case ModeNormal:
 		if len(m.tasks) == 0 {
 			helpView := m.help.FullHelpView(m.keys.FullHelp())
-			return "You have no tasks.\n" + s + helpView
+			return "You have no tasks.\n" + helpView
 		}
 		title = termenv.String("YOUR TASKS")
-		tasksToDisplay = m.tasks
+		tasksToDisplay = m.filteredTasks()
 	case ModeDoneTaskList:
 		if len(m.doneTasks) == 0 {
 			return "You have no completed tasks.\n"
@@ -341,24 +397,26 @@ func (m model) normalView() string {
 		tasksToDisplay = m.doneTasks
 	}
 	title = title.Bold().Underline()
-	s = fmt.Sprintf("%v\n\n", title)
+	s.WriteString(fmt.Sprintf("%v\n\n", title))
 
 	for i, v := range tasksToDisplay {
 		cursor := termenv.String(" ")
 		if m.cursor == i+1 {
 			cursor = termenv.String(">").Foreground(termenv.ANSIYellow)
 		}
-		taskName := termenv.String(v.Name)
-		taskName = taskName.Bold()
-		timeLayout := "2006-01-02 15:04"
 
-		s += fmt.Sprintf("%v #%d: %s (%s)\n", cursor, v.ID, taskName, v.CreatedAt.Format(timeLayout))
+		taskStr := m.taskView(v, m.cursor == i+1)
+		timeLayout := "2006-01-02 15:04"
+		s.WriteString(fmt.Sprintf("%v #%d: %s (%s)\n", cursor, v.ID, taskStr, v.CreatedAt.Format(timeLayout)))
 	}
 
 	helpView := m.help.FullHelpView(m.keys.FullHelp())
 	height := 1
 
-	return "\n" + s + strings.Repeat("\n", height) + helpView
+	s.WriteString("\n" + strings.Repeat("\n", height))
+	s.WriteString(helpView)
+
+	return s.String()
 }
 
 func (m model) addingTaskView() string {
@@ -395,4 +453,54 @@ func main() {
 func report(err error) {
 	fmt.Printf("td: %s\n", err.Error())
 	os.Exit(1)
+}
+
+func (m model) filteredTasks() []*Task {
+	var tasks []*Task
+
+	if m.filter == FilterAll {
+		tasks = append(tasks, m.tasks...)
+	} else {
+		for _, task := range m.tasks {
+			if filterToPriority(m.filter) == task.Priority {
+				tasks = append(tasks, task)
+			}
+		}
+	}
+
+	SortTasksByPriority(tasks)
+
+	return tasks
+}
+
+func (m *model) followTask(taskID int) {
+	// Find task's new position in filtered/sorted list
+	tasks := m.filteredTasks()
+	for i, task := range tasks {
+		if task.ID == taskID {
+			m.cursor = i + 1
+			return
+		}
+	}
+	// If task not found, adjust cursor to valid position
+	if len(tasks) == 0 {
+		m.cursor = 0
+	} else if m.cursor > len(tasks) {
+		m.cursor = len(tasks)
+	}
+}
+
+func filterToPriority(f filterMode) Priority {
+	switch f {
+	case FilterHigh:
+		return PriorityHigh
+	case FilterMedium:
+		return PriorityMedium
+	case FilterLow:
+		return PriorityLow
+	case FilterNone:
+		return PriorityNone
+	default:
+		return PriorityNone
+	}
 }
