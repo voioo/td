@@ -4,6 +4,18 @@ on:
   pull_request:
   push:
     branches: [ "main" ]
+    paths:
+      # Core application files
+      - 'cmd/td/**'
+      - 'Makefile'
+      
+      # Installation and packaging files
+      - 'install.ps1'
+      - 'PKGBUILD'
+      
+      # CI/CD files
+      - '.github/workflows/release.yml'
+      - '.github/workflows/ci.yml'
 
 permissions:
   contents: write
@@ -48,6 +60,9 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: 
+      name: release
+      url: ${{ github.server_url }}/${{ github.repository }}/releases
     steps:
       - uses: actions/checkout@v4
         with:
