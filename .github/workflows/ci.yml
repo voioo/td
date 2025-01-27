@@ -44,7 +44,7 @@ jobs:
         working-directory: ./cmd/td
         run: go test -v ./...
 
-  create-release:
+  create-tag:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -53,12 +53,6 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN }}
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.5'
-          cache: true
           
       - name: Create and push tag
         run: |
@@ -73,77 +67,5 @@ jobs:
           echo "Creating new tag: $new_tag"
           git tag -a "$new_tag" -m "Release $new_tag"
           git push origin "$new_tag"
-          
-          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
-        id: create_tag
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-
-      - name: Build binaries
-        run: |
-          VERSION=${{ steps.create_tag.outputs.new_tag }}
-          COMMIT=$(git rev-parse --short HEAD)
-          DATE=$(date -u +%Y-%m-%d)
-          LDFLAGS="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}"
-
-          # Build for various platforms
-          GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o td_linux_amd64 ./cmd/td
-          GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o td_darwin_amd64 ./cmd/td
-          GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o td_windows_amd64.exe ./cmd/td
-
-          # Create archives
-          tar czf td_linux_amd64.tar.gz td_linux_amd64
-          tar czf td_darwin_amd64.tar.gz td_darwin_amd64
-          zip td_windows_amd64.zip td_windows_amd64.exe
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.create_tag.outputs.new_tag }}
-          name: Release ${{ steps.create_tag.outputs.new_tag }}
-          files: |
-            td_linux_amd64.tar.gz
-            td_darwin_amd64.tar.gz
-            td_windows_amd64.zip
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-
-      - name: Generate SHA256 checksums
-        run: |
-          sha256sum td_linux_amd64.tar.gz > checksums.txt
-          sha256sum td_darwin_amd64.tar.gz >> checksums.txt
-          sha256sum td_windows_amd64.zip >> checksums.txt
-          echo "linux_checksum=$(sha256sum td_linux_amd64.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
-        id: checksums
-
-      - name: Update AUR package
-        env:
-          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          GIT_NAME: "GitHub Actions"
-          GIT_EMAIL: "actions@github.com"
-        run: |
-          # Setup SSH for AUR
-          mkdir -p ~/.ssh
-          echo "${AUR_SSH_PRIVATE_KEY}" > ~/.ssh/aur
-          chmod 600 ~/.ssh/aur
-          echo -e "Host aur.archlinux.org\n  IdentityFile ~/.ssh/aur\n  User aur" > ~/.ssh/config
-          
-          # Clone AUR package
-          git clone ssh://aur@aur.archlinux.org/td-tui.git aur-package
-          cd aur-package
-
-          # Update PKGBUILD version and checksums
-          sed -i "s/pkgver=.*/pkgver=${VERSION#v}/" PKGBUILD
-          sed -i "s/sha256sums=.*/sha256sums=('${{ steps.checksums.outputs.linux_checksum }}')/" PKGBUILD
-          
-          # Update .SRCINFO
-          makepkg --printsrcinfo > .SRCINFO
-          
-          # Commit and push changes
-          git config user.name "${GIT_NAME}"
-          git config user.email "${GIT_EMAIL}"
-          git add PKGBUILD .SRCINFO
-          git commit -m "Update to version ${VERSION}"
-          git push origin master 
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }} 
