@@ -23,6 +23,34 @@ permissions:
   actions: read
 
 jobs:
+  validate-commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        run: |
+          # Get all commits in the PR (excluding merge commits)
+          git fetch origin ${{ github.base_ref }}
+          COMMITS=$(git log --no-merges --pretty=format:"%s" origin/${{ github.base_ref }}..HEAD)
+          
+          # Validate each commit message
+          echo "$COMMITS" | while read -r msg; do
+            if ! echo "$msg" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-z]+\))?!?: .+$|^BREAKING CHANGE: .+$"; then
+              echo "Invalid commit message format: $msg"
+              echo "Expected format: type(scope)?: description"
+              echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore"
+              echo "Examples:"
+              echo "  feat: add new task filtering"
+              echo "  fix(ui): correct task deletion"
+              echo "  BREAKING CHANGE: change task file format"
+              exit 1
+            fi
+          done
+
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -60,14 +88,29 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: 
-      name: release
-      url: ${{ github.server_url }}/${{ github.repository }}/releases
+    permissions:
+      contents: write
+    environment: release
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          # Get commit messages since last tag
+          COMMITS=$(git log $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD --pretty=format:"%s")
+          
+          # Determine version bump based on commit messages
+          if echo "$COMMITS" | grep -q "^BREAKING CHANGE:\|^[[:alpha:]]\+!:"; then
+            echo "bump=major" >> $GITHUB_OUTPUT
+          elif echo "$COMMITS" | grep -q "^feat:"; then
+            echo "bump=minor" >> $GITHUB_OUTPUT
+          else
+            echo "bump=patch" >> $GITHUB_OUTPUT
+          fi
           
       - name: Create and push tag
         run: |
@@ -76,9 +119,23 @@ jobs:
           
           latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           IFS='.' read -r major minor patch <<< "${latest_tag#v}"
-          new_patch=$((patch + 1))
-          new_tag="v$major.$minor.$new_patch"
           
+          case "${{ steps.bump.outputs.bump }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+          
+          new_tag="v$major.$minor.$patch"
           echo "Creating new tag: $new_tag"
           git tag -a "$new_tag" -m "Release $new_tag"
           git push origin "$new_tag"
