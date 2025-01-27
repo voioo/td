@@ -106,13 +106,12 @@ jobs:
           VERSION: ${{ steps.get_version.outputs.version }}
           COMMIT: ${{ github.sha }}
           DATE: ${{ steps.get_version.outputs.date }}
+        shell: bash
         run: |
           cd cmd/td
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            go build -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT:0:7} -X main.date=${DATE}" -o ${{ matrix.binary }}
-          else
-            go build -ldflags="-s -w -X main.version=$VERSION -X main.commit=${COMMIT:0:7} -X main.date=$DATE" -o ${{ matrix.binary }}
-          fi
+          COMMIT_SHORT=${COMMIT:0:7}
+          echo "Building with version=$VERSION commit=$COMMIT_SHORT date=$DATE"  # Debug output
+          go build -ldflags="-s -w -X 'main.version=$VERSION' -X 'main.commit=$COMMIT_SHORT' -X 'main.date=$DATE'" -o ${{ matrix.binary }}
 
       - name: Prepare Release Files
         shell: bash

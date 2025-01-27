@@ -15,7 +15,6 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// Version information set by build flags
 var (
 	version = "dev"
 	commit  = "none"
