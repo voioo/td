@@ -272,7 +272,6 @@ jobs:
           license=('0BSD')
           provides=('td')
           conflicts=('td')
-          depends=('git')
           
           source_x86_64=("https://github.com/voioo/td/releases/download/v\${pkgver}/td_linux_amd64.tar.gz")
           source_aarch64=("https://github.com/voioo/td/releases/download/v\${pkgver}/td_linux_arm64.tar.gz")
