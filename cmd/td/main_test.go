@@ -136,25 +136,47 @@ func TestModelUndoRedo(t *testing.T) {
 		m.tasks = append(m.tasks, newTask)
 		m.pushUndo(action{Type: "add", Task: newTask})
 
-		if len(m.tasks) != 2 { t.Fatalf("Expected 2 tasks after add, got %d", len(m.tasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
-		if len(m.redoStack) != 0 { t.Fatalf("Expected 0 redo actions, got %d", len(m.redoStack)) }
+		if len(m.tasks) != 2 {
+			t.Fatalf("Expected 2 tasks after add, got %d", len(m.tasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
+		if len(m.redoStack) != 0 {
+			t.Fatalf("Expected 0 redo actions, got %d", len(m.redoStack))
+		}
 
 		// Perform Undo
 		m.performUndo()
 
-		if len(m.tasks) != 1 { t.Fatalf("Expected 1 task after undo, got %d", len(m.tasks)) }
-		if len(m.undoStack) != 0 { t.Fatalf("Expected 0 undo actions after undo, got %d", len(m.undoStack)) }
-		if len(m.redoStack) != 1 { t.Fatalf("Expected 1 redo action after undo, got %d", len(m.redoStack)) }
-		if m.tasks[0].ID != 1 { t.Errorf("Expected remaining task ID to be 1, got %d", m.tasks[0].ID) }
+		if len(m.tasks) != 1 {
+			t.Fatalf("Expected 1 task after undo, got %d", len(m.tasks))
+		}
+		if len(m.undoStack) != 0 {
+			t.Fatalf("Expected 0 undo actions after undo, got %d", len(m.undoStack))
+		}
+		if len(m.redoStack) != 1 {
+			t.Fatalf("Expected 1 redo action after undo, got %d", len(m.redoStack))
+		}
+		if m.tasks[0].ID != 1 {
+			t.Errorf("Expected remaining task ID to be 1, got %d", m.tasks[0].ID)
+		}
 
 		// Perform Redo
 		m.performRedo()
 
-		if len(m.tasks) != 2 { t.Fatalf("Expected 2 tasks after redo, got %d", len(m.tasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action after redo, got %d", len(m.undoStack)) }
-		if len(m.redoStack) != 0 { t.Fatalf("Expected 0 redo actions after redo, got %d", len(m.redoStack)) }
-		if m.tasks[0].ID != 1 || m.tasks[1].ID != 2 { t.Errorf("Expected task IDs 1 and 2 after redo, got %d, %d", m.tasks[0].ID, m.tasks[1].ID) }
+		if len(m.tasks) != 2 {
+			t.Fatalf("Expected 2 tasks after redo, got %d", len(m.tasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action after redo, got %d", len(m.undoStack))
+		}
+		if len(m.redoStack) != 0 {
+			t.Fatalf("Expected 0 redo actions after redo, got %d", len(m.redoStack))
+		}
+		if m.tasks[0].ID != 1 || m.tasks[1].ID != 2 {
+			t.Errorf("Expected task IDs 1 and 2 after redo, got %d, %d", m.tasks[0].ID, m.tasks[1].ID)
+		}
 	})
 
 	t.Run("delete task", func(t *testing.T) {
@@ -168,25 +190,47 @@ func TestModelUndoRedo(t *testing.T) {
 		m.tasks = m.tasks[:1] // Keep only the first task
 		m.pushUndo(action{Type: "delete", Task: taskToDelete})
 
-		if len(m.tasks) != 1 { t.Fatalf("Expected 1 task after delete, got %d", len(m.tasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
-		if len(m.redoStack) != 0 { t.Fatalf("Expected 0 redo actions, got %d", len(m.redoStack)) }
+		if len(m.tasks) != 1 {
+			t.Fatalf("Expected 1 task after delete, got %d", len(m.tasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
+		if len(m.redoStack) != 0 {
+			t.Fatalf("Expected 0 redo actions, got %d", len(m.redoStack))
+		}
 
 		// Perform Undo
 		m.performUndo()
 
-		if len(m.tasks) != 2 { t.Fatalf("Expected 2 tasks after undo, got %d", len(m.tasks)) }
-		if len(m.undoStack) != 0 { t.Fatalf("Expected 0 undo actions after undo, got %d", len(m.undoStack)) }
-		if len(m.redoStack) != 1 { t.Fatalf("Expected 1 redo action after undo, got %d", len(m.redoStack)) }
-		if m.tasks[0].ID != 1 || m.tasks[1].ID != 2 { t.Errorf("Expected task IDs 1 and 2 after undo, got %d, %d", m.tasks[0].ID, m.tasks[1].ID) }
+		if len(m.tasks) != 2 {
+			t.Fatalf("Expected 2 tasks after undo, got %d", len(m.tasks))
+		}
+		if len(m.undoStack) != 0 {
+			t.Fatalf("Expected 0 undo actions after undo, got %d", len(m.undoStack))
+		}
+		if len(m.redoStack) != 1 {
+			t.Fatalf("Expected 1 redo action after undo, got %d", len(m.redoStack))
+		}
+		if m.tasks[0].ID != 1 || m.tasks[1].ID != 2 {
+			t.Errorf("Expected task IDs 1 and 2 after undo, got %d, %d", m.tasks[0].ID, m.tasks[1].ID)
+		}
 
 		// Perform Redo
 		m.performRedo()
 
-		if len(m.tasks) != 1 { t.Fatalf("Expected 1 task after redo, got %d", len(m.tasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action after redo, got %d", len(m.undoStack)) }
-		if len(m.redoStack) != 0 { t.Fatalf("Expected 0 redo actions after redo, got %d", len(m.redoStack)) }
-		if m.tasks[0].ID != 1 { t.Errorf("Expected remaining task ID to be 1 after redo, got %d", m.tasks[0].ID) }
+		if len(m.tasks) != 1 {
+			t.Fatalf("Expected 1 task after redo, got %d", len(m.tasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action after redo, got %d", len(m.undoStack))
+		}
+		if len(m.redoStack) != 0 {
+			t.Fatalf("Expected 0 redo actions after redo, got %d", len(m.redoStack))
+		}
+		if m.tasks[0].ID != 1 {
+			t.Errorf("Expected remaining task ID to be 1 after redo, got %d", m.tasks[0].ID)
+		}
 	})
 
 	t.Run("complete task", func(t *testing.T) {
@@ -199,25 +243,47 @@ func TestModelUndoRedo(t *testing.T) {
 		taskToComplete.IsDone = true
 		m.pushUndo(action{Type: "complete", Task: taskToComplete})
 
-		if len(m.tasks) != 0 { t.Fatalf("Expected 0 active tasks after complete, got %d", len(m.tasks)) }
-		if len(m.doneTasks) != 1 { t.Fatalf("Expected 1 done task after complete, got %d", len(m.doneTasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
+		if len(m.tasks) != 0 {
+			t.Fatalf("Expected 0 active tasks after complete, got %d", len(m.tasks))
+		}
+		if len(m.doneTasks) != 1 {
+			t.Fatalf("Expected 1 done task after complete, got %d", len(m.doneTasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
 
 		// Perform Undo
 		m.performUndo()
 
-		if len(m.tasks) != 1 { t.Fatalf("Expected 1 active task after undo, got %d", len(m.tasks)) }
-		if len(m.doneTasks) != 0 { t.Fatalf("Expected 0 done tasks after undo, got %d", len(m.doneTasks)) }
-		if len(m.redoStack) != 1 { t.Fatalf("Expected 1 redo action, got %d", len(m.redoStack)) }
-		if m.tasks[0].IsDone { t.Error("Task should not be done after undo") }
+		if len(m.tasks) != 1 {
+			t.Fatalf("Expected 1 active task after undo, got %d", len(m.tasks))
+		}
+		if len(m.doneTasks) != 0 {
+			t.Fatalf("Expected 0 done tasks after undo, got %d", len(m.doneTasks))
+		}
+		if len(m.redoStack) != 1 {
+			t.Fatalf("Expected 1 redo action, got %d", len(m.redoStack))
+		}
+		if m.tasks[0].IsDone {
+			t.Error("Task should not be done after undo")
+		}
 
 		// Perform Redo
 		m.performRedo()
 
-		if len(m.tasks) != 0 { t.Fatalf("Expected 0 active tasks after redo, got %d", len(m.tasks)) }
-		if len(m.doneTasks) != 1 { t.Fatalf("Expected 1 done task after redo, got %d", len(m.doneTasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
-		if !m.doneTasks[0].IsDone { t.Error("Task should be done after redo") }
+		if len(m.tasks) != 0 {
+			t.Fatalf("Expected 0 active tasks after redo, got %d", len(m.tasks))
+		}
+		if len(m.doneTasks) != 1 {
+			t.Fatalf("Expected 1 done task after redo, got %d", len(m.doneTasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
+		if !m.doneTasks[0].IsDone {
+			t.Error("Task should be done after redo")
+		}
 	})
 
 	t.Run("uncomplete task", func(t *testing.T) {
@@ -230,25 +296,47 @@ func TestModelUndoRedo(t *testing.T) {
 		taskToUncomplete.IsDone = false
 		m.pushUndo(action{Type: "uncomplete", Task: taskToUncomplete})
 
-		if len(m.tasks) != 1 { t.Fatalf("Expected 1 active task after uncomplete, got %d", len(m.tasks)) }
-		if len(m.doneTasks) != 0 { t.Fatalf("Expected 0 done tasks after uncomplete, got %d", len(m.doneTasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
+		if len(m.tasks) != 1 {
+			t.Fatalf("Expected 1 active task after uncomplete, got %d", len(m.tasks))
+		}
+		if len(m.doneTasks) != 0 {
+			t.Fatalf("Expected 0 done tasks after uncomplete, got %d", len(m.doneTasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
 
 		// Perform Undo
 		m.performUndo()
 
-		if len(m.tasks) != 0 { t.Fatalf("Expected 0 active tasks after undo, got %d", len(m.tasks)) }
-		if len(m.doneTasks) != 1 { t.Fatalf("Expected 1 done task after undo, got %d", len(m.doneTasks)) }
-		if len(m.redoStack) != 1 { t.Fatalf("Expected 1 redo action, got %d", len(m.redoStack)) }
-		if !m.doneTasks[0].IsDone { t.Error("Task should be done after undo") }
+		if len(m.tasks) != 0 {
+			t.Fatalf("Expected 0 active tasks after undo, got %d", len(m.tasks))
+		}
+		if len(m.doneTasks) != 1 {
+			t.Fatalf("Expected 1 done task after undo, got %d", len(m.doneTasks))
+		}
+		if len(m.redoStack) != 1 {
+			t.Fatalf("Expected 1 redo action, got %d", len(m.redoStack))
+		}
+		if !m.doneTasks[0].IsDone {
+			t.Error("Task should be done after undo")
+		}
 
 		// Perform Redo
 		m.performRedo()
 
-		if len(m.tasks) != 1 { t.Fatalf("Expected 1 active task after redo, got %d", len(m.tasks)) }
-		if len(m.doneTasks) != 0 { t.Fatalf("Expected 0 done tasks after redo, got %d", len(m.doneTasks)) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
-		if m.tasks[0].IsDone { t.Error("Task should not be done after redo") }
+		if len(m.tasks) != 1 {
+			t.Fatalf("Expected 1 active task after redo, got %d", len(m.tasks))
+		}
+		if len(m.doneTasks) != 0 {
+			t.Fatalf("Expected 0 done tasks after redo, got %d", len(m.doneTasks))
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
+		if m.tasks[0].IsDone {
+			t.Error("Task should not be done after redo")
+		}
 	})
 
 	t.Run("edit task", func(t *testing.T) {
@@ -261,19 +349,31 @@ func TestModelUndoRedo(t *testing.T) {
 		m.tasks[0].Name = newName
 		m.pushUndo(action{Type: "edit", Task: taskToEdit, OldState: originalName, NewState: newName})
 
-		if m.tasks[0].Name != newName { t.Fatalf("Expected task name to be '%s', got '%s'", newName, m.tasks[0].Name) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
+		if m.tasks[0].Name != newName {
+			t.Fatalf("Expected task name to be '%s', got '%s'", newName, m.tasks[0].Name)
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
 
 		// Perform Undo
 		m.performUndo()
 
-		if m.tasks[0].Name != originalName { t.Fatalf("Expected task name to be '%s' after undo, got '%s'", originalName, m.tasks[0].Name) }
-		if len(m.redoStack) != 1 { t.Fatalf("Expected 1 redo action, got %d", len(m.redoStack)) }
+		if m.tasks[0].Name != originalName {
+			t.Fatalf("Expected task name to be '%s' after undo, got '%s'", originalName, m.tasks[0].Name)
+		}
+		if len(m.redoStack) != 1 {
+			t.Fatalf("Expected 1 redo action, got %d", len(m.redoStack))
+		}
 
 		// Perform Redo
 		m.performRedo()
 
-		if m.tasks[0].Name != newName { t.Fatalf("Expected task name to be '%s' after redo, got '%s'", newName, m.tasks[0].Name) }
-		if len(m.undoStack) != 1 { t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack)) }
+		if m.tasks[0].Name != newName {
+			t.Fatalf("Expected task name to be '%s' after redo, got '%s'", newName, m.tasks[0].Name)
+		}
+		if len(m.undoStack) != 1 {
+			t.Fatalf("Expected 1 undo action, got %d", len(m.undoStack))
+		}
 	})
 }
