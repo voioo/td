@@ -13,7 +13,7 @@ const (
 	KeyRight  = "right"
 	KeyType   = "t"
 	KeyHelp   = "?"
-	KeyQuit   = "esc"
+	KeyQuit   = "q"
 )
 
 const (
@@ -32,12 +32,14 @@ type keyMap struct {
 	Left     key.Binding
 	Right    key.Binding
 	Enter    key.Binding
+	ListType key.Binding
 	Escape   key.Binding
-	Type     key.Binding
 	Help     key.Binding
 	Quit     key.Binding
 	Priority key.Binding
 	Filter   key.Binding
+	Undo     key.Binding
+	Redo     key.Binding
 }
 
 var keys = keyMap{
@@ -52,10 +54,6 @@ var keys = keyMap{
 	Enter: key.NewBinding(
 		key.WithKeys(KeyEnter),
 		key.WithHelp(KeyEnter, "save"),
-	),
-	Escape: key.NewBinding(
-		key.WithKeys(KeyEscape),
-		key.WithHelp(KeyEscape, "go back/quit"),
 	),
 	Up: key.NewBinding(
 		key.WithKeys(KeyUp, "k"),
@@ -73,12 +71,16 @@ var keys = keyMap{
 		key.WithKeys(KeyRight, "l"),
 		key.WithHelp("→/l", "move right"),
 	),
-	Type: key.NewBinding(
-		key.WithKeys(KeyType),
-		key.WithHelp(KeyType, "list type"),
+	ListType: key.NewBinding(
+		key.WithKeys("t", "tab"),
+		key.WithHelp("t/tab", "list type"),
+	),
+	Escape: key.NewBinding(
+		key.WithKeys(KeyEscape),
+		key.WithHelp(KeyEscape, "back/cancel"),
 	),
 	Help: key.NewBinding(
-		key.WithKeys(KeyHelp, KeyHelp),
+		key.WithKeys(KeyHelp),
 		key.WithHelp(KeyHelp, "toggle usage"),
 	),
 	Quit: key.NewBinding(
@@ -93,12 +95,20 @@ var keys = keyMap{
 		key.WithKeys("f"),
 		key.WithHelp("f", "filter by priority"),
 	),
+	Undo: key.NewBinding(
+		key.WithKeys("u"),
+		key.WithHelp("u", "undo"),
+	),
+	Redo: key.NewBinding(
+		key.WithKeys("ctrl+r"),
+		key.WithHelp("ctrl+r", "redo"),
+	),
 }
 
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Add, k.Delete, k.Up, k.Down, k.Left, k.Right},
-		{k.Type, k.Priority, k.Filter},
-		{k.Help, k.Quit},
+		{k.ListType, k.Priority, k.Filter, k.Escape},
+		{k.Help, k.Quit, k.Undo, k.Redo},
 	}
 }
