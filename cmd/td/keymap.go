@@ -96,8 +96,8 @@ var keys = keyMap{
 		key.WithHelp("f", "filter by priority"),
 	),
 	Undo: key.NewBinding(
-		key.WithKeys("u"),
-		key.WithHelp("u", "undo"),
+		key.WithKeys("ctrl+u"),
+		key.WithHelp("ctrl+u", "undo"),
 	),
 	Redo: key.NewBinding(
 		key.WithKeys("ctrl+r"),
