@@ -103,8 +103,7 @@ func (m *Model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.mode = ModeDoneTaskList
 		case key.Matches(msg, m.keys.Quit):
-			m.quitting = true
-			return m, tea.Quit
+			return m, m.saveAndQuitCmd()
 		case key.Matches(msg, m.keys.Filter):
 			m.filter = (m.filter + 1) % 5
 			m.invalidateCache()
@@ -260,8 +259,7 @@ func (m *Model) doneTaskListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mode = ModeNormal
 			return m, nil
 		case key.Matches(msg, m.keys.Quit):
-			m.quitting = true
-			return m, tea.Quit
+			return m, m.saveAndQuitCmd()
 		case key.Matches(msg, m.keys.Undo):
 			if m.undoManager.Undo(m.taskManager) {
 				m.invalidateCache()

@@ -9,6 +9,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/voioo/td/internal/config"
+	"github.com/voioo/td/internal/logger"
+	"github.com/voioo/td/internal/storage"
 	"github.com/voioo/td/internal/task"
 )
 
@@ -34,6 +36,9 @@ const (
 	FilterHigh
 )
 
+// saveAndQuitMsg is sent when the application should save and quit.
+type saveAndQuitMsg struct{}
+
 // Model represents the main UI model.
 type Model struct {
 	config      *config.Config
@@ -44,8 +49,6 @@ type Model struct {
 	help              help.Model
 	inputStyle        lipgloss.Style
 	keys              KeyMap
-	tasks             []*task.Task // Cached filtered tasks
-	doneTasks         []*task.Task
 	newTaskNameInput  input.Model
 	editTaskNameInput input.Model
 
@@ -207,6 +210,143 @@ func NewModel(cfg *config.Config, taskManager *task.TaskManager) *Model {
 	return m
 }
 
+// NewTestModel creates a minimal UI model for testing purposes.
+// It skips initializing Bubble Tea input components that require a TTY.
+func NewTestModel(cfg *config.Config, taskManager *task.TaskManager) (*Model, error) {
+	// Create key bindings from config
+	keys := KeyMap{
+		Add: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Add),
+			key.WithHelp(cfg.KeyMap.Add, "add new task"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Delete),
+			key.WithHelp(cfg.KeyMap.Delete, "delete task"),
+		),
+		Enter: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Enter),
+			key.WithHelp(cfg.KeyMap.Enter, "save"),
+		),
+		Up: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Up, "k"),
+			key.WithHelp("↑/k", "move up"),
+		),
+		Down: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Down, "j"),
+			key.WithHelp("↓/j", "move down"),
+		),
+		Left: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Left, "h"),
+			key.WithHelp("←/h", "move left"),
+		),
+		Right: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Right, "l"),
+			key.WithHelp("→/l", "move right"),
+		),
+		Edit: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "edit task"),
+		),
+		ListType: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.ListType, "tab"),
+			key.WithHelp("t/tab", "list type"),
+		),
+		Escape: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Escape),
+			key.WithHelp(cfg.KeyMap.Escape, "back/cancel"),
+		),
+		Help: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Help),
+			key.WithHelp(cfg.KeyMap.Help, "toggle usage"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Quit, "ctrl+c"),
+			key.WithHelp(cfg.KeyMap.Quit, "quit"),
+		),
+		Filter: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Filter),
+			key.WithHelp(cfg.KeyMap.Filter, "filter by priority"),
+		),
+		Undo: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Undo),
+			key.WithHelp(cfg.KeyMap.Undo, "undo"),
+		),
+		Redo: key.NewBinding(
+			key.WithKeys(cfg.KeyMap.Redo),
+			key.WithHelp(cfg.KeyMap.Redo, "redo"),
+		),
+		PriorityNone: key.NewBinding(
+			key.WithKeys("1"),
+			key.WithHelp("1", "set no priority"),
+		),
+		PriorityLow: key.NewBinding(
+			key.WithKeys("2"),
+			key.WithHelp("2", "set low priority"),
+		),
+		PriorityMedium: key.NewBinding(
+			key.WithKeys("3"),
+			key.WithHelp("3", "set medium priority"),
+		),
+		PriorityHigh: key.NewBinding(
+			key.WithKeys("4"),
+			key.WithHelp("4", "set high priority"),
+		),
+		Home: key.NewBinding(
+			key.WithKeys("home", "g"),
+			key.WithHelp("home/g", "go to top"),
+		),
+		End: key.NewBinding(
+			key.WithKeys("end", "G"),
+			key.WithHelp("end/G", "go to bottom"),
+		),
+		ClearCompleted: key.NewBinding(
+			key.WithKeys("C"),
+			key.WithHelp("C", "clear completed tasks"),
+		),
+	}
+
+	m := &Model{
+		config:      cfg,
+		taskManager: taskManager,
+		undoManager: task.NewUndoManager(100),
+		keys:        keys,
+		help:        help.New(),
+		inputStyle:  lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.PrimaryColor)),
+		// Skip input models for testing - they're not needed for quit save testing
+		cursor:     0,
+		mode:       ModeNormal,
+		filter:     FilterAll,
+		taskCache:  []*task.Task{},
+		cacheValid: false,
+	}
+
+	// Set initial cursor position
+	m.updateTaskCache()
+
+	return m, nil
+}
+
+// saveAndQuitCmd returns a command that saves tasks and then quits.
+func (m *Model) saveAndQuitCmd() tea.Cmd {
+	return tea.Sequence(
+		func() tea.Msg {
+			logger.Info("Saving tasks before quit",
+				logger.F("active_tasks", len(m.taskManager.GetTasks())),
+				logger.F("done_tasks", len(m.taskManager.GetDoneTasks())))
+
+			repo := storage.NewRepository(m.config.DataFile)
+			err := repo.SaveTasks(m.taskManager.GetTasks(), m.taskManager.GetDoneTasks())
+			if err != nil {
+				logger.Error("Failed to save tasks", logger.F("error", err))
+			} else {
+				logger.Info("Tasks saved successfully")
+			}
+			return saveAndQuitMsg{}
+		},
+		tea.Quit,
+	)
+}
+
 // Init initializes the Bubble Tea model.
 func (m *Model) Init() tea.Cmd {
 	return nil
@@ -214,19 +354,25 @@ func (m *Model) Init() tea.Cmd {
 
 // Update handles UI updates based on messages.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch m.mode {
-	case ModeNormal:
-		return m.normalUpdate(msg)
-	case ModeDoneTaskList:
-		return m.doneTaskListUpdate(msg)
-	case ModeAdditional:
-		return m.addingTaskUpdate(msg)
-	case ModeEdit:
-		return m.editTaskUpdate(msg)
-	case ModeHelp:
-		return m.helpUpdate(msg)
+	switch msg := msg.(type) {
+	case saveAndQuitMsg:
+		m.quitting = true
+		return m, tea.Quit
 	default:
-		return m, nil
+		switch m.mode {
+		case ModeNormal:
+			return m.normalUpdate(msg)
+		case ModeDoneTaskList:
+			return m.doneTaskListUpdate(msg)
+		case ModeAdditional:
+			return m.addingTaskUpdate(msg)
+		case ModeEdit:
+			return m.editTaskUpdate(msg)
+		case ModeHelp:
+			return m.helpUpdate(msg)
+		default:
+			return m, nil
+		}
 	}
 }
 
