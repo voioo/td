@@ -234,22 +234,24 @@ jobs:
 
       - name: Setup SSH key for AUR
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          # Ensure we're working with the correct SSH directory
+          SSH_DIR="/root/.ssh"
+          mkdir -p "$SSH_DIR"
+          chmod 700 "$SSH_DIR"
           
           # Install SSH private key
-          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > "$SSH_DIR/id_ed25519"
+          chmod 600 "$SSH_DIR/id_ed25519"
           
           # Add known hosts
-          echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+" >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+          echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+" > "$SSH_DIR/known_hosts"
+          chmod 644 "$SSH_DIR/known_hosts"
           
           # Create SSH config
-          cat > ~/.ssh/config << EOF
+          cat > "$SSH_DIR/config" << EOF
           Host aur.archlinux.org
             HostName aur.archlinux.org
-            IdentityFile ~/.ssh/id_ed25519
+            IdentityFile $SSH_DIR/id_ed25519
             User aur
             Port 22
             PreferredAuthentications publickey
@@ -259,9 +261,12 @@ jobs:
             ServerAliveCountMax 10
             ConnectTimeout 30
           EOF
-          chmod 600 ~/.ssh/config
+          chmod 600 "$SSH_DIR/config"
           
+          # Verify the setup
           echo "SSH setup completed successfully"
+          echo "Files created:"
+          ls -la "$SSH_DIR/"
 
       - name: Update PKGBUILD
         env:
@@ -308,21 +313,23 @@ jobs:
         run: |
           echo "=== SSH Debug Information ==="
           echo "SSH config:"
-          cat ~/.ssh/config || echo "No SSH config found"
+          cat /root/.ssh/config || echo "No SSH config found"
           echo ""
           echo "SSH key permissions:"
-          ls -la ~/.ssh/
+          ls -la /root/.ssh/
           echo ""
           echo "Known hosts:"
-          cat ~/.ssh/known_hosts || echo "No known hosts found"
+          cat /root/.ssh/known_hosts || echo "No known hosts found"
           echo ""
+          echo "Current user: $(whoami)"
+          echo "HOME variable: $HOME"
           
       - name: Test SSH connection
         run: |
           echo "Testing SSH connection to AUR..."
           # Set SSH agent environment
           eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_ed25519
+          ssh-add /root/.ssh/id_ed25519
           
           # Test connection with verbose output
           ssh -T -v aur@aur.archlinux.org -o ConnectTimeout=30 -o StrictHostKeyChecking=yes 2>&1 || echo "SSH test completed (exit code: $?)"
@@ -335,7 +342,7 @@ jobs:
           
           # Setup SSH agent for this step
           eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_ed25519
+          ssh-add /root/.ssh/id_ed25519
           
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
