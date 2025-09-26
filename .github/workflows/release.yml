@@ -232,24 +232,36 @@ jobs:
         run: |
           pacman -Sy --noconfirm git openssh base-devel curl
 
-      - name: Install SSH key for AUR
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          known_hosts: 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+'
-          name: id_ed25519
-          config: |
-            Host aur.archlinux.org
-              HostName aur.archlinux.org
-              IdentityFile ~/.ssh/id_ed25519
-              User aur
-              Port 22
-              PreferredAuthentications publickey
-              IdentitiesOnly yes
-              StrictHostKeyChecking yes
-              ServerAliveInterval 60
-              ServerAliveCountMax 10
-              ConnectTimeout 30
+      - name: Setup SSH key for AUR
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Install SSH private key
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          
+          # Add known hosts
+          echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          
+          # Create SSH config
+          cat > ~/.ssh/config << EOF
+          Host aur.archlinux.org
+            HostName aur.archlinux.org
+            IdentityFile ~/.ssh/id_ed25519
+            User aur
+            Port 22
+            PreferredAuthentications publickey
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 60
+            ServerAliveCountMax 10
+            ConnectTimeout 30
+          EOF
+          chmod 600 ~/.ssh/config
+          
+          echo "SSH setup completed successfully"
 
       - name: Update PKGBUILD
         env:
