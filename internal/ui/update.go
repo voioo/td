@@ -30,6 +30,15 @@ func (m *Model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.editTaskNameInput.Placeholder = taskToEdit.Name
 			m.editTaskNameInput.SetValue("")
 			return m, m.editTaskNameInput.Focus()
+		case key.Matches(msg, m.keys.Edit):
+			if m.cursor == 0 || m.cursor > len(m.taskCache) {
+				break
+			}
+			taskToEdit := m.taskCache[m.cursor-1]
+			m.mode = ModeEdit
+			m.editTaskNameInput.Placeholder = taskToEdit.Name
+			m.editTaskNameInput.SetValue("")
+			return m, m.editTaskNameInput.Focus()
 		case key.Matches(msg, m.keys.Enter):
 			if m.cursor == 0 || m.cursor > len(m.taskCache) {
 				break
@@ -52,22 +61,6 @@ func (m *Model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if m.cursor > len(m.taskCache) {
 				m.cursor = len(m.taskCache)
 			}
-		case key.Matches(msg, m.keys.Priority):
-			if len(m.taskCache) > 0 && m.cursor > 0 && m.cursor <= len(m.taskCache) {
-				taskToUpdate := m.taskCache[m.cursor-1]
-				oldPriority := taskToUpdate.Priority
-				newPriority := (oldPriority + 1) % 4
-				if updatedTask := m.taskManager.SetTaskPriority(taskToUpdate.ID, newPriority); updatedTask != nil {
-					m.undoManager.PushUndo(task.Action{
-						Type:     task.ActionTypePriority,
-						Task:     updatedTask,
-						OldState: oldPriority,
-						NewState: newPriority,
-					})
-					m.invalidateCache()
-					m.followTask(taskToUpdate.ID)
-				}
-			}
 		case key.Matches(msg, m.keys.Add):
 			m.mode = ModeAdditional
 			return m, m.newTaskNameInput.Focus()
@@ -85,6 +78,7 @@ func (m *Model) normalUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 					OldState: oldState,
 				})
 				m.invalidateCache()
+				m.updateTaskCache()
 			}
 
 			if len(m.taskCache) == 0 {
@@ -257,6 +251,14 @@ func (m *Model) doneTaskListUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.cursor = 1
 			}
+		case key.Matches(msg, m.keys.ListType):
+			if len(m.taskManager.GetTasks()) == 0 {
+				m.cursor = 0
+			} else {
+				m.cursor = 1
+			}
+			m.mode = ModeNormal
+			return m, nil
 		case key.Matches(msg, m.keys.Quit):
 			m.quitting = true
 			return m, tea.Quit
@@ -399,6 +401,8 @@ func (m *Model) helpUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
+			m.mode = ModeNormal
+		case key.Matches(msg, m.keys.Escape):
 			m.mode = ModeNormal
 		}
 	}

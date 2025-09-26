@@ -66,12 +66,12 @@ type KeyMap struct {
 	Delete   key.Binding
 	Left     key.Binding
 	Right    key.Binding
+	Edit     key.Binding
 	Enter    key.Binding
 	ListType key.Binding
 	Escape   key.Binding
 	Help     key.Binding
 	Quit     key.Binding
-	Priority key.Binding
 	Filter   key.Binding
 	Undo     key.Binding
 	Redo     key.Binding
@@ -117,6 +117,10 @@ func NewModel(cfg *config.Config, taskManager *task.TaskManager) *Model {
 			key.WithKeys(cfg.KeyMap.Right, "l"),
 			key.WithHelp("→/l", "move right"),
 		),
+		Edit: key.NewBinding(
+			key.WithKeys("e"),
+			key.WithHelp("e", "edit task"),
+		),
 		ListType: key.NewBinding(
 			key.WithKeys(cfg.KeyMap.ListType, "tab"),
 			key.WithHelp("t/tab", "list type"),
@@ -132,10 +136,6 @@ func NewModel(cfg *config.Config, taskManager *task.TaskManager) *Model {
 		Quit: key.NewBinding(
 			key.WithKeys(cfg.KeyMap.Quit, "ctrl+c"),
 			key.WithHelp(cfg.KeyMap.Quit, "quit"),
-		),
-		Priority: key.NewBinding(
-			key.WithKeys(cfg.KeyMap.Priority),
-			key.WithHelp(cfg.KeyMap.Priority, "set priority"),
 		),
 		Filter: key.NewBinding(
 			key.WithKeys(cfg.KeyMap.Filter),
@@ -320,5 +320,21 @@ func filterToPriority(f FilterMode) task.Priority {
 		return task.PriorityNone
 	default:
 		return task.PriorityNone
+	}
+}
+
+// filterModeName returns a human-readable name for the current filter mode.
+func (m *Model) filterModeName() string {
+	switch m.filter {
+	case FilterNone:
+		return "no priority"
+	case FilterLow:
+		return "low priority"
+	case FilterMedium:
+		return "medium priority"
+	case FilterHigh:
+		return "high priority"
+	default:
+		return "all"
 	}
 }
