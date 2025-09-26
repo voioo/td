@@ -169,6 +169,7 @@ jobs:
   homebrew:
     needs: [build, release]  # Need both to get version and ensure release exists
     runs-on: ubuntu-latest
+    if: ${{ secrets.TAP_GITHUB_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -223,19 +224,15 @@ jobs:
   aur-publish:
     needs: [build, release]
     runs-on: ubuntu-latest
-    container: 
+    container:
       image: archlinux:base-devel
+    if: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           pacman -Sy --noconfirm git openssh base-devel curl
-
-      - name: Add AUR SSH host key
-        run: |
-          mkdir -p /root/.ssh
-          ssh-keyscan -t ed25519 aur.archlinux.org >> /root/.ssh/known_hosts
 
       - name: Install SSH key for AUR
         uses: shimataro/ssh-key-action@v2
