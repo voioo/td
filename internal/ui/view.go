@@ -27,7 +27,12 @@ func (m *Model) normalView() string {
 			helpView := m.help.FullHelpView(m.keys.FullHelp())
 			return "You have no tasks.\n" + helpView
 		}
-		title = termenv.String("YOUR TASKS")
+		titleStr := "YOUR TASKS"
+		if m.filter != FilterAll {
+			filterName := m.filterModeName()
+			titleStr += fmt.Sprintf(" (filtered: %s)", filterName)
+		}
+		title = termenv.String(titleStr)
 		m.updateTaskCache()
 		tasksToDisplay = m.taskCache
 	case ModeDoneTaskList:
@@ -134,7 +139,7 @@ func getUsageView(config *config.Config) string {
 			Render(" mark done/undone"),
 		lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#90CAF9")).
-			Render("  • →/l   ")+lipgloss.NewStyle().
+			Render("  • e/→    ")+lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFFFF")).
 			Render(" edit task name"),
 		"",
@@ -188,11 +193,6 @@ func getUsageView(config *config.Config) string {
 		lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#666666")).
 			Render("──────────────────"),
-		lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#90CAF9")).
-			Render("  • "+config.KeyMap.Priority+"    ")+lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFFFF")).
-			Render(" cycle priority"),
 		lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#90CAF9")).
 			Render("  • 1-4   ")+lipgloss.NewStyle().
