@@ -240,8 +240,16 @@ jobs:
           name: id_ed25519
           config: |
             Host aur.archlinux.org
+              HostName aur.archlinux.org
               IdentityFile ~/.ssh/id_ed25519
               User aur
+              Port 22
+              PreferredAuthentications publickey
+              IdentitiesOnly yes
+              StrictHostKeyChecking yes
+              ServerAliveInterval 60
+              ServerAliveCountMax 10
+              ConnectTimeout 30
 
       - name: Update PKGBUILD
         env:
@@ -284,16 +292,87 @@ jobs:
           chown -R builduser:builduser .
           su builduser -c "makepkg --cleanbuild --printsrcinfo > .SRCINFO"
 
+      - name: Debug SSH setup
+        run: |
+          echo "=== SSH Debug Information ==="
+          echo "SSH config:"
+          cat ~/.ssh/config || echo "No SSH config found"
+          echo ""
+          echo "SSH key permissions:"
+          ls -la ~/.ssh/
+          echo ""
+          echo "Known hosts:"
+          cat ~/.ssh/known_hosts || echo "No known hosts found"
+          echo ""
+          
+      - name: Test SSH connection
+        run: |
+          echo "Testing SSH connection to AUR..."
+          # Set SSH agent environment
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519
+          
+          # Test connection with verbose output
+          ssh -T -v aur@aur.archlinux.org -o ConnectTimeout=30 -o StrictHostKeyChecking=yes 2>&1 || echo "SSH test completed (exit code: $?)"
+          
       - name: Publish to AUR
         env:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
+          set -e
+          
+          # Setup SSH agent for this step
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_ed25519
+          
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git clone ssh://aur@aur.archlinux.org/td-tui.git aur-repo
+          
+          # Function to retry git operations
+          retry_git() {
+            local max_attempts=3
+            local delay=5
+            local attempt=1
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "Attempt $attempt of $max_attempts..."
+              if "$@"; then
+                echo "Success on attempt $attempt"
+                return 0
+              else
+                echo "Failed attempt $attempt"
+                if [ $attempt -lt $max_attempts ]; then
+                  echo "Waiting $delay seconds before retry..."
+                  sleep $delay
+                  delay=$((delay * 2))  # Exponential backoff
+                fi
+                attempt=$((attempt + 1))
+              fi
+            done
+            
+            echo "All attempts failed"
+            return 1
+          }
+          
+          # Clone AUR repository with retry
+          echo "Cloning AUR repository..."
+          retry_git git clone ssh://aur@aur.archlinux.org/td-tui.git aur-repo
+          
+          # Copy files
           cp PKGBUILD aur-repo/
           cp .SRCINFO aur-repo/
           cd aur-repo
+          
+          # Check if there are any changes
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No changes detected, skipping push"
+            exit 0
+          fi
+          
+          # Add and commit changes
           git add PKGBUILD .SRCINFO
           git commit -m "Update to version ${VERSION}"
-          git push
+          
+          # Push with retry
+          echo "Pushing changes..."
+          retry_git git push origin master
