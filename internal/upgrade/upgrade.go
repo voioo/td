@@ -372,6 +372,14 @@ func extractZip(archivePath, destDir string) (string, error) {
 
 // replaceBinary replaces the current executable with the new one
 func replaceBinary(currentPath, newPath string) error {
+	if runtime.GOOS == "windows" {
+		return replaceBinaryWindows(currentPath, newPath)
+	}
+	return replaceBinaryUnix(currentPath, newPath)
+}
+
+// replaceBinaryUnix replaces the binary on Unix-like systems
+func replaceBinaryUnix(currentPath, newPath string) error {
 	// Create backup of current binary
 	backupPath := currentPath + ".backup"
 	if err := copyFile(currentPath, backupPath); err != nil {
@@ -389,6 +397,56 @@ func replaceBinary(currentPath, newPath string) error {
 	os.Remove(backupPath)
 
 	return nil
+}
+
+// replaceBinaryWindows replaces the binary on Windows using a separate updater process
+func replaceBinaryWindows(currentPath, newPath string) error {
+	// On Windows, we cannot replace a running executable directly because the OS locks it.
+	// We need to use a batch script that runs after this process exits.
+
+	// Create a batch script that will handle the replacement
+	batchScript := currentPath + "_update.bat"
+
+	// Create the batch script content
+	scriptContent := fmt.Sprintf(`@echo off
+echo Updating td...
+timeout /t 2 /nobreak >nul
+copy /y "%s" "%s" >nul
+if errorlevel 1 (
+    echo Failed to update td
+    pause
+    exit /b 1
+)
+echo Update completed successfully!
+del "%s" >nul 2>&1
+start "" "%s"
+del "%%~f0" >nul 2>&1
+`, newPath, currentPath, newPath, currentPath)
+
+	// Write the batch script
+	if err := os.WriteFile(batchScript, []byte(scriptContent), 0644); err != nil {
+		return fmt.Errorf("failed to create update script: %w", err)
+	}
+
+	logger.Info("Created update script", logger.F("script_path", batchScript))
+
+	// Start the batch script
+	cmd := exec.Command("cmd", "/c", batchScript)
+	// Hide the command window on Windows
+	setWindowsHidden(cmd)
+
+	if err := cmd.Start(); err != nil {
+		os.Remove(batchScript) // Clean up on failure
+		return fmt.Errorf("failed to start update script: %w", err)
+	}
+
+	fmt.Println("Update process started. td will restart automatically...")
+	logger.Info("Update script started, exiting current process")
+
+	// Exit the current process to allow the update to proceed
+	os.Exit(0)
+
+	return nil // This line will never be reached, but needed for compilation
 }
 
 // copyFile copies a file from src to dst
@@ -440,4 +498,29 @@ func isPackageManaged() bool {
 	}
 
 	return false
+}
+
+// CleanupOldExecutables removes old executable files left from previous upgrades
+func CleanupOldExecutables() {
+	if runtime.GOOS != "windows" {
+		return // Only needed on Windows
+	}
+
+	exePath, err := os.Executable()
+	if err != nil {
+		return // Can't determine executable path
+	}
+
+	// Clean up any leftover update script
+	batchScript := exePath + "_update.bat"
+	if _, err := os.Stat(batchScript); err == nil {
+		if err := os.Remove(batchScript); err != nil {
+			logger.Info("Failed to cleanup update script",
+				logger.F("script_path", batchScript),
+				logger.F("error", err))
+		} else {
+			logger.Info("Cleaned up update script",
+				logger.F("script_path", batchScript))
+		}
+	}
 }

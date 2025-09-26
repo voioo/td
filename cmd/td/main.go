@@ -82,6 +82,9 @@ func main() {
 		logger.F("version", version),
 		logger.F("commit", commit))
 
+	// Cleanup old executable files from previous upgrades (Windows only)
+	upgrade.CleanupOldExecutables()
+
 	// Load configuration
 	cfg, err := config.LoadConfig("")
 	if err != nil {
