@@ -48,27 +48,6 @@ func initializeModel(cfg *config.Config) (tea.Model, error) {
 	return uiModel, nil
 }
 
-// saveAndQuit saves tasks and returns a quit command.
-func saveAndQuit(model *ui.Model) (tea.Model, tea.Cmd) {
-	cfg := model.GetConfig()
-	taskManager := model.GetTaskManager()
-
-	logger.Info("Saving tasks before quit",
-		logger.F("active_tasks", len(taskManager.GetTasks())),
-		logger.F("done_tasks", len(taskManager.GetDoneTasks())))
-
-	repo := storage.NewRepository(cfg.DataFile)
-	err := repo.SaveTasks(taskManager.GetTasks(), taskManager.GetDoneTasks())
-	if err != nil {
-		logger.Error("Failed to save tasks", logger.F("error", err))
-		// Continue with quit even if save fails
-	} else {
-		logger.Info("Tasks saved successfully")
-	}
-
-	return model, tea.Quit
-}
-
 func main() {
 	versionFlag := flag.Bool("version", false, "print version information")
 	flag.BoolVar(versionFlag, "v", false, "print version information (shorthand)")
