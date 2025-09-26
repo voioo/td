@@ -12,6 +12,7 @@ import (
 	"github.com/voioo/td/internal/storage"
 	"github.com/voioo/td/internal/task"
 	"github.com/voioo/td/internal/ui"
+	"github.com/voioo/td/internal/upgrade"
 )
 
 var (
@@ -51,6 +52,7 @@ func initializeModel(cfg *config.Config) (tea.Model, error) {
 func main() {
 	versionFlag := flag.Bool("version", false, "print version information")
 	flag.BoolVar(versionFlag, "v", false, "print version information (shorthand)")
+	upgradeFlag := flag.Bool("upgrade", false, "upgrade td to the latest version")
 
 	flag.Parse()
 
@@ -60,6 +62,19 @@ func main() {
 			logger.F("version", version),
 			logger.F("commit", commit),
 			logger.F("date", date))
+		os.Exit(0)
+	}
+
+	if *upgradeFlag {
+		logger.Info("Upgrade requested",
+			logger.F("version", version),
+			logger.F("commit", commit))
+		if err := upgrade.Upgrade(version); err != nil {
+			logger.Error("Upgrade failed", logger.F("error", err))
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Successfully upgraded td!")
 		os.Exit(0)
 	}
 
