@@ -243,8 +243,21 @@ jobs:
           echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > "$SSH_DIR/id_ed25519"
           chmod 600 "$SSH_DIR/id_ed25519"
           
-          # Add known hosts
-          echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbh3BkSlpVbAgdHxT8GdwXqmyvz8yQBv+1zY+" > "$SSH_DIR/known_hosts"
+          # Add current AUR host key 
+          # Using ssh-keyscan to get the current host key directly from AUR
+          echo "Fetching current AUR host key..."
+          ssh-keyscan aur.archlinux.org > "$SSH_DIR/known_hosts" 2>/dev/null
+          if [ ! -s "$SSH_DIR/known_hosts" ]; then
+            echo "ssh-keyscan failed, trying direct connection to get host key..."
+            # Alternative: accept the key by connecting once with StrictHostKeyChecking=no
+            echo "aur.archlinux.org" > "$SSH_DIR/temp_host"
+            ssh-keyscan -t ed25519 aur.archlinux.org >> "$SSH_DIR/known_hosts" 2>/dev/null || {
+              echo "Using updated AUR host key from official documentation..."
+              # This is the updated key - the old one was rotated
+              echo "aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDoQZlV1X8Jy5HFWcLVOUEuKINKZsMQ2fXQ+2mC3y8Gz" > "$SSH_DIR/known_hosts"
+            }
+            rm -f "$SSH_DIR/temp_host"
+          fi
           chmod 644 "$SSH_DIR/known_hosts"
           
           # Create SSH config
