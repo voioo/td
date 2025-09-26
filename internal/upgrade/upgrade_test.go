@@ -15,7 +15,7 @@ func TestReplaceBinaryWindows(t *testing.T) {
 
 	// Create a temporary directory for testing
 	tempDir := t.TempDir()
-	
+
 	// Create a mock current executable
 	currentPath := filepath.Join(tempDir, "td.exe")
 	currentContent := []byte("current executable content")
@@ -32,10 +32,10 @@ func TestReplaceBinaryWindows(t *testing.T) {
 
 	// Note: We can't easily test replaceBinaryWindows because it calls os.Exit(0)
 	// Instead, we'll test that the batch script is created correctly
-	
+
 	// We'll create a mock version that doesn't exit for testing
 	batchScript := currentPath + "_update.bat"
-	
+
 	scriptContent := fmt.Sprintf(`@echo off
 echo Updating td...
 timeout /t 2 /nobreak >nul
@@ -72,7 +72,7 @@ func TestReplaceBinaryUnix(t *testing.T) {
 
 	// Create a temporary directory for testing
 	tempDir := t.TempDir()
-	
+
 	// Create a mock current executable
 	currentPath := filepath.Join(tempDir, "td")
 	currentContent := []byte("current executable content")
@@ -117,7 +117,7 @@ func TestCleanupOldExecutables(t *testing.T) {
 	// This is a more complex test since it involves os.Executable()
 	// We'll create a mock scenario in a temp directory
 	tempDir := t.TempDir()
-	
+
 	// Create a mock update script file
 	scriptFile := filepath.Join(tempDir, "test.exe_update.bat")
 	if err := os.WriteFile(scriptFile, []byte("@echo off\necho test"), 0644); err != nil {
@@ -142,14 +142,14 @@ func TestCleanupOldExecutables(t *testing.T) {
 
 func TestDetectPlatform(t *testing.T) {
 	platform, arch := detectPlatform()
-	
+
 	// Verify platform is one of the expected values
 	expectedPlatforms := map[string]bool{
 		"windows": true,
 		"linux":   true,
 		"darwin":  true,
 	}
-	
+
 	if !expectedPlatforms[platform] {
 		t.Errorf("Unexpected platform: %s", platform)
 	}
@@ -159,7 +159,7 @@ func TestDetectPlatform(t *testing.T) {
 		"amd64": true,
 		"arm64": true,
 	}
-	
+
 	if !expectedArchs[arch] {
 		t.Errorf("Unexpected architecture: %s", arch)
 	}
@@ -167,11 +167,11 @@ func TestDetectPlatform(t *testing.T) {
 	// Verify it matches runtime values (after normalization)
 	expectedPlatform := runtime.GOOS
 	expectedArch := runtime.GOARCH
-	
+
 	if platform != expectedPlatform {
 		t.Errorf("Platform mismatch: got %s, expected %s", platform, expectedPlatform)
 	}
-	
+
 	if arch != expectedArch {
 		t.Errorf("Architecture mismatch: got %s, expected %s", arch, expectedArch)
 	}
