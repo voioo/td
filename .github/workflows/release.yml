@@ -169,7 +169,6 @@ jobs:
   homebrew:
     needs: [build, release]  # Need both to get version and ensure release exists
     runs-on: ubuntu-latest
-    if: "${{ secrets.TAP_GITHUB_TOKEN != '' }}"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -226,7 +225,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel
-    if: "${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}"
     steps:
       - uses: actions/checkout@v4
 
