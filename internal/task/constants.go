@@ -2,12 +2,12 @@ package task
 
 // Action types for undo/redo operations
 const (
-	ActionTypeAdd        = "add"
-	ActionTypeDelete     = "delete"
-	ActionTypeComplete   = "complete"
-	ActionTypeUncomplete = "uncomplete"
-	ActionTypeEdit       = "edit"
-	ActionTypePriority   = "priority"
+	ActionTypeAdd        ActionType = "add"
+	ActionTypeDelete     ActionType = "delete"
+	ActionTypeComplete   ActionType = "complete"
+	ActionTypeUncomplete ActionType = "uncomplete"
+	ActionTypeEdit       ActionType = "edit"
+	ActionTypePriority   ActionType = "priority"
 )
 
 // Default maximum undo stack size

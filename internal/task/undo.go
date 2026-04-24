@@ -63,12 +63,14 @@ func (um *UndoManager) Undo(taskManager *TaskManager) bool {
 
 	switch lastAction.Type {
 	case ActionTypeAdd:
-		// Remove the added task
+		// Remove the added task using TaskManager's delete method
 		taskManager.DeleteTask(lastAction.Task.ID)
 	case ActionTypeDelete:
-		// Restore the deleted task
+		// Restore the deleted task directly — UncompleteTask would search doneTasks
+		// for the ID but the task no longer exists there after deletion.
 		if lastAction.Task.IsDone {
 			taskManager.doneTasks = append(taskManager.doneTasks, lastAction.Task)
+			taskManager.sortTasks()
 		} else {
 			taskManager.tasks = append(taskManager.tasks, lastAction.Task)
 			taskManager.sortTasks()
@@ -96,6 +98,7 @@ func (um *UndoManager) Undo(taskManager *TaskManager) bool {
 				break
 			}
 		}
+		taskManager.sortTasks()
 	case ActionTypeEdit:
 		// Restore old name
 		if oldName, ok := lastAction.OldState.(string); ok {
