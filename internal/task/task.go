@@ -3,6 +3,7 @@ package task
 
 import (
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -48,6 +49,7 @@ type TaskManager struct {
 	tasks     []*Task
 	doneTasks []*Task
 	nextID    int
+	mu        sync.Mutex
 }
 
 // NewTaskManager creates a new task manager with the given tasks.
@@ -64,6 +66,8 @@ func NewTaskManager(tasks []*Task, doneTasks []*Task, nextID int) *TaskManager {
 
 // GetTasks returns a copy of the active tasks.
 func (tm *TaskManager) GetTasks() []*Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	tasks := make([]*Task, len(tm.tasks))
 	copy(tasks, tm.tasks)
 	return tasks
@@ -71,6 +75,8 @@ func (tm *TaskManager) GetTasks() []*Task {
 
 // GetDoneTasks returns a copy of the completed tasks.
 func (tm *TaskManager) GetDoneTasks() []*Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	doneTasks := make([]*Task, len(tm.doneTasks))
 	copy(doneTasks, tm.doneTasks)
 	return doneTasks
@@ -78,11 +84,15 @@ func (tm *TaskManager) GetDoneTasks() []*Task {
 
 // GetNextID returns the next available task ID.
 func (tm *TaskManager) GetNextID() int {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	return tm.nextID
 }
 
 // AddTask adds a new task with the given name.
 func (tm *TaskManager) AddTask(name string) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	tm.nextID++
 	task := &Task{
 		ID:        tm.nextID,
@@ -98,6 +108,8 @@ func (tm *TaskManager) AddTask(name string) *Task {
 
 // DeleteTask removes the task with the given ID.
 func (tm *TaskManager) DeleteTask(id int) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	for i, task := range tm.tasks {
 		if task.ID == id {
 			deleted := task
@@ -117,11 +129,13 @@ func (tm *TaskManager) DeleteTask(id int) *Task {
 
 // CompleteTask marks the task with the given ID as completed.
 func (tm *TaskManager) CompleteTask(id int) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	for i, task := range tm.tasks {
 		if task.ID == id {
 			task.IsDone = true
-			tm.doneTasks = append(tm.doneTasks, task)
 			tm.tasks = append(tm.tasks[:i], tm.tasks[i+1:]...)
+			tm.doneTasks = append(tm.doneTasks, task)
 			tm.sortTasks()
 			return task
 		}
@@ -131,11 +145,13 @@ func (tm *TaskManager) CompleteTask(id int) *Task {
 
 // UncompleteTask marks the completed task with the given ID as active.
 func (tm *TaskManager) UncompleteTask(id int) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	for i, task := range tm.doneTasks {
 		if task.ID == id {
 			task.IsDone = false
-			tm.tasks = append(tm.tasks, task)
 			tm.doneTasks = append(tm.doneTasks[:i], tm.doneTasks[i+1:]...)
+			tm.tasks = append(tm.tasks, task)
 			tm.sortTasks()
 			return task
 		}
@@ -145,6 +161,8 @@ func (tm *TaskManager) UncompleteTask(id int) *Task {
 
 // UpdateTaskName changes the name of the task with the given ID.
 func (tm *TaskManager) UpdateTaskName(id int, newName string) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	for _, task := range tm.tasks {
 		if task.ID == id {
 			task.Name = newName
@@ -162,6 +180,8 @@ func (tm *TaskManager) UpdateTaskName(id int, newName string) *Task {
 
 // SetTaskPriority sets the priority of the task with the given ID.
 func (tm *TaskManager) SetTaskPriority(id int, priority Priority) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	for _, task := range tm.tasks {
 		if task.ID == id {
 			task.Priority = priority
@@ -174,6 +194,8 @@ func (tm *TaskManager) SetTaskPriority(id int, priority Priority) *Task {
 
 // FindTaskByID finds a task by its ID in both active and completed tasks.
 func (tm *TaskManager) FindTaskByID(id int) *Task {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 	for _, task := range tm.tasks {
 		if task.ID == id {
 			return task
